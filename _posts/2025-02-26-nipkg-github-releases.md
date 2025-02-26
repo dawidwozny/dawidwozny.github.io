@@ -22,16 +22,23 @@ NIPKG feed, regardless of where it is hosted, is composed of three files: Packag
 * Packages (no extensions) is the main file where all the information regarding included packages is stored.
 * Packages.gz is simply Packages file compressed with [gzip](https://en.wikipedia.org/wiki/Gzip).
 * Packages.stamps is a lookup table of package name and [epoch timestamp](https://www.epochconverter.com/).
-<br>
-Sample content of these files for one package can be seen below.
+
+
+**Structure and sample content of the files:**
 <br>
 ![file structure](/assets/img/2025-02/nipkg-feed-file-structure.png)
+*File structure*
 ![packages file content](/assets/img/2025-02/packages.png)
+*Packages content*
 ![packages.stamps file content](/assets/img/2025-02/packages-stamps.png)
+*Packages.stamps content*
 
 ## Manual solution
 So the functionality was there but there was no way to add absolute package reference easily. I have worked with NIPKG for couple years now so was not scared of modyfing feed files manually.  First, I have replaced the name with link to a pakcage stored on [GitHub Release](https://github.com/zoryatec/gcd/releases) but it didn't - Packages.gz file was required. I had allready planed to automate the process, so developed little console application to compress Packages content into Packages.gz. It worked. 
 ![packages file with link](/assets/img/2025-02/packages-link.png)
+<br>
+*Packages file wher package name was replaced with url*
+<br>
 
 ## Automated solution
 The main drive for that functionality was a tool called [GCD - G (LabVIEW) CI/CD](https://github.com/zoryatec/gcd) that I had planed to host on [GitHub Release](https://github.com/zoryatec/gcd/releases) and this functionality was perfect addition. Now I can just run the command below which will
