@@ -68,9 +68,10 @@ Want to try it out? Just add the feed `https://raw.githubusercontent.com/zoryate
 If your NIPKG version is >= 23.5.0.49296-0+f144, you should be able to download the tool straight from GitHub Releases.
 
 ## Disclaimer
-- ⚠️ The tool itself is not production ready yet.
-- ⚠️ Unsure why NI does not give the ability to add absolute package in their command line and if there is a reason I don't know yet.
-- ⚠️ The feed (not packages) is hosted in source code repo. I had serious dilema here about braking separations of concerns principle but wanted that to be self-contained. 
+⚠️ The tool itself is not production-ready yet!  
+⚠️ Unsure why NI does not give the ability to add an absolute package in their command line, and if there is a reason, I don't know yet!  
+⚠️ The feed (not packages) is hosted in the source code repo! I had a serious dilemma here about breaking the separation of concerns principle but wanted it to be self-contained!  
+
 
 ## Further limitations
 This process currently works only for publicly availible feeds. The big part of what I am currently working on with [GCD](https://github.com/zoryatec/gcd) is making sharing NIPKG feeds privately through internet (not only localy).
