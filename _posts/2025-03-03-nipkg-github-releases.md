@@ -1,6 +1,6 @@
 ---
 title: NIPKG feed with GitHub releases
-date: 2025-02-26 12:00:00 +0100
+date: 2025-03-03 12:00:00 +0100
 categories: [DevOps, NIPKG]
 tags: [labview, nipkg, gcd]     # TAG names should always be lowercase
 ---
@@ -15,7 +15,7 @@ For example, the regular `nipkg feed-add-pkg` command does not allow you to add 
 
 What I thought would work was a command where you pass in the feed directory and the absolute path (or URL) to a package, and voilà, it works! Unfortunately, to use `nipkg feed-add-absolute-package`, the package needs to already be in *another* feed. It’s like a chicken and egg situation. 🐣🥚
 
-Remember trying that couple years ago but this time was really determined to make it work. All I say won't make sense without a context. Let's start with NIPKG feed. 
+I gave it a shot a couple of years ago, but this time, I was truly determined to make it work! Without context, none of this will make much sense—so let’s kick things off with the NIPKG feed!
 
 ## Nipkg feed structure
 NIPKG feed, regardless of where it is hosted, is composed of three files: Packages, Packages.gz and Packages.stamps.
@@ -26,26 +26,35 @@ NIPKG feed, regardless of where it is hosted, is composed of three files: Packag
 
 **Structure and sample content of the files:**
 <br>
-![file structure](/assets/img/2025-02/nipkg-feed-file-structure.png)
+![file structure](/assets/img/2025-03/nipkg-feed-file-structure.png)
 *File structure*
-![packages file content](/assets/img/2025-02/packages.png)
+![packages file content](/assets/img/2025-03/packages.png)
 *Packages content*
-![packages.stamps file content](/assets/img/2025-02/packages-stamps.png)
+![packages.stamps file content](/assets/img/2025-03/packages-stamps.png)
 *Packages.stamps content*
 
 ## Manual solution
-So the functionality was there but there was no way to add absolute package reference easily. I have worked with NIPKG for couple years now so was not scared of modyfing feed files manually.  First, I have replaced the name with link to a pakcage stored on [GitHub Release](https://github.com/zoryatec/gcd/releases) but it didn't - Packages.gz file was required. I had allready planed to automate the process, so developed little console application to compress Packages content into Packages.gz. It worked. 
-![packages file with link](/assets/img/2025-02/packages-link.png)
+The functionality was there, but there was no easy way to add an absolute package reference. Using `feed-add-absolute-package` was no go. I knew the file structure but didn’t want to start everything from scratch. So, first, I added the package using the regular nipkg feed-add-pkg command. Then, I swapped the name with a link to a package stored on [GitHub Release](https://github.com/zoryatec/gcd/releases).
+
+It wasn’t that simple, though—turns out, a Packages.gz file was required! Since I had already planned to automate this process (if it worked), I built a small console application to compress the Packages content into Packages.gz. And this time… it worked! 
+
+![packages file with link](/assets/img/2025-03/packages-link.png)
 <br>
 *Packages file wher package name was replaced with url*
 <br>
 
-## Automated solution
-The main drive for that functionality was a tool called [GCD - G (LabVIEW) CI/CD](https://github.com/zoryatec/gcd) that I had planed to host on [GitHub Release](https://github.com/zoryatec/gcd/releases) and this functionality was perfect addition. Now I can just run the command below which will
-* download a package from a source
-* add a package with usuall `nipkg feed-add-pkg`
-* replace package name with package url
-* generage Packages.gz file
+
+## Automated Solution 🚀  
+
+The driving force behind this functionality was a tool called [GCD - G (LabVIEW) CI/CD](https://github.com/zoryatec/gcd), which I had planned to host on [GitHub Release](https://github.com/zoryatec/gcd/releases). This feature turned out to be the perfect addition!  
+
+Now, with a single command, I can:  
+✅ Download a package from a source  
+✅ Add it using the regular `nipkg feed-add-pkg`  
+✅ Replace the package name with the package URL  
+✅ Generate the `Packages.gz` file automatically  
+
+Here’s how it works:  
 
 ``` powershell
 gcd nipkg feed-local add-http-package `
@@ -54,13 +63,14 @@ gcd nipkg feed-local add-http-package `
   --use-absolute-path `
 ```
 
-If you want to try you can add feed `https://raw.githubusercontent.com/zoryatec/gcd/refs/heads/main/feed` to your NIPKG either through GUI or command line. Provided that your NIPKG version is >= 23.5.0.49296-0+f144 then you should be able to just download a tool which is hosted on GitHub Releases.
+Want to try it out? Just add the feed `https://raw.githubusercontent.com/zoryatec/gcd/refs/heads/main/feed` to your NIPKG — either through the GUI or via the command line.
+
+If your NIPKG version is >= 23.5.0.49296-0+f144, you should be able to download the tool straight from GitHub Releases.
 
 ## Disclaimer
-* ⚠ The tool is not production ready yet.
-* ⚠ Don't know if it will always work but it works for my use cases.
-* ⚠ I hope NI will finally develop similar command.
-* ⚠ The feed (not packages) is hosted in source code repo. I had serious dilema here about braking separations of concerns principle but wanted that to be self-contained. 
+- ⚠️ The tool itself is not production ready yet.
+- ⚠️ Unsure why NI does not give the ability to add absolute package in their command line and if there is a reason I don't know yet.
+- ⚠️ The feed (not packages) is hosted in source code repo. I had serious dilema here about braking separations of concerns principle but wanted that to be self-contained. 
 
-## Limitations
+## Further limitations
 This process currently works only for publicly availible feeds. The big part of what I am currently working on with [GCD](https://github.com/zoryatec/gcd) is making sharing NIPKG feeds privately through internet (not only localy).
