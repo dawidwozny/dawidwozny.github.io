@@ -34,7 +34,7 @@ NIPKG feed, regardless of where it is hosted, is composed of three files: Packag
 *Packages.stamps content*
 
 ## Manual solution
-The functionality was there, but there was no easy way to add an absolute package reference. Using `feed-add-absolute-package` was no go. I knew the file structure but didn’t want to start everything from scratch. So, first, I added the package using the regular nipkg feed-add-pkg command. Then, I swapped the name with a link to a package stored on [GitHub Release](https://github.com/zoryatec/gcd/releases).
+The functionality was there, but there was no easy way to add an absolute package reference. Using `feed-add-absolute-package` was no go. I knew the file structure but didn’t want to start everything from scratch. So, first, I added the package using the regular `nipkg feed-add-pkg` command. Then, I swapped the name with a link [https://github.com/zoryatec/gcd/releases/download/0.23.11/gcd_0.23.11_windows_x64.nipkg](https://github.com/zoryatec/gcd/releases) to a package stored on GitHub Releases.
 
 It wasn’t that simple, though—turns out, a Packages.gz file was required! Since I had already planned to automate this process (if it worked), I built a small console application to compress the Packages content into Packages.gz. And this time… it worked! 
 
