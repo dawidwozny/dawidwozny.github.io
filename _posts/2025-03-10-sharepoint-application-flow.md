@@ -53,4 +53,20 @@ Pick the folder and check it's permisions. By default they should be empty
 `GET https://graph.microsoft.com/v1.0/sites/{siteId}/drives/{driveId}/items/{itemId}/permissions`
 
 ### Give read/write permissions to your service principal
+[Selective Permissions](https://learn.microsoft.com/en-us/graph/permissions-selected-overview?tabs=http)
+
+
+`POST https://graph.microsoft.com/v1.0/sites/{siteId}/drives/{driveId}/items/{itemId}/permissions`
+``` json
+{
+    "roles": [
+        "fullcontrol"
+    ],
+    "grantedTo": {
+        "application": {
+            "id": "{applicationId}"
+        }
+    }
+}
+```
 
