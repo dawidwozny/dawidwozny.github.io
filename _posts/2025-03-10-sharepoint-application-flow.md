@@ -27,3 +27,19 @@ Fortunatelly granural permission to sharepoint was something not only me request
 ### Add API Permissions [(Service Prinicipal)](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser)
 ![app registrations](/assets/img/2025-03/api-permission.png)
 *Api Permissions*
+
+### Create sharepoint site
+In this example I will give permissions to the whole sharpoint site therfore created a brand new site.
+
+### Get site and drive information from Graph
+This is where simple clicking ends. For all the quieries here I used Graph Explorer.
+
+This querry will give you a list of sites in your organisation with all the details.<br>
+`GET https://graph.microsoft.com/v1.0/sites?search=*`
+
+Use site information to retive drive information:<br>
+`GET https://graph.microsoft.com/v1.0/sites/contoso.sharepoint.com,12345,abcdef/drive`
+
+List folders in the drive:
+`https://graph.microsoft.com/v1.0/drives/{drive-id}/root/children`
+
