@@ -6,10 +6,10 @@ tags: [labview, nipkg, gcd]     # TAG names should always be lowercase
 ---
 ## The Wait is Finally Over!
 
-This is something I’ve been eagerly anticipating for a long time, and I missed the moment when it became possible.
+This is something I’ve been waiting for a long time, and I missed the moment when it became possible.
 In [Q3 2023](https://www.ni.com/docs/en-US/bundle/package-manager/page/new-behavior-changes.html), the NI Package Manager released a feature that had a rather cryptic description: “Incorporate support for URL redirection, commonly referred to as URL forwarding, in Package URLs.” This feature had been sitting on the [Idea Exchange](https://forums.ni.com/t5/NI-Package-Management-Idea/NIPM-Allow-feeds-to-use-nipkg-files-that-are-hosted-on-GitHub/idi-p/3946753) since 2019, and it’s so exciting that it’s finally been developed!
 
-Initially, I thought it would be a breeze to add a package with this shiny new functionality, but it turned out to be a little more complex than expected. The feature was there, but the nipkg command line did not change as much as I thought it would.
+Initially, I thought it would be a breeze to add a package with this shiny new functionality, but it turned out to be a little more complex than expected. The feature was there, but the nipkg command line did not change as much as I thought it would. NIPKG was able to handle URL redirects, but the problem is how to include a URL to a package in the first place.
 
 For example, the regular `nipkg feed-add-pkg` command does not allow you to add a package from a path that is not relative to the feed path. The `nipkg feed-add-absolute-package` command? Well... it was just weird!
 
@@ -34,7 +34,7 @@ NIPKG feed, regardless of where it is hosted, is composed of three files: Packag
 *Packages.stamps content*
 
 ## Manual solution
-The functionality was there, but there was no easy way to add an absolute package reference. Using `feed-add-absolute-package` was no go. I knew the file structure but didn’t want to start everything from scratch. So, first, I added the package using the regular `nipkg feed-add-pkg` command. Then, I swapped the name with a link [https://github.com/zoryatec/gcd/releases/download/0.23.11/gcd_0.23.11_windows_x64.nipkg](https://github.com/zoryatec/gcd/releases) to a package stored on GitHub Releases.
+Going back to the problem, how can I  add an absolute package reference to a feed? Using `feed-add-absolute-package` was no go. I knew the file structure but didn’t want to start everything from scratch. So, first, I added the package using the regular `nipkg feed-add-pkg` command. Then, I swapped the name with a link [https://github.com/zoryatec/gcd/releases/download/0.23.11/gcd_0.23.11_windows_x64.nipkg](https://github.com/zoryatec/gcd/releases) to a package stored on GitHub Releases.
 
 It wasn’t that simple, though—turns out, a Packages.gz file was required! Since I had already planned to automate this process (if it worked), I built a small console application to compress the Packages content into Packages.gz. And this time… it worked! 
 
@@ -69,7 +69,7 @@ If your NIPKG version is >= 23.5.0.49296-0+f144, you should be able to download 
 
 ## Disclaimer
 ⚠️ The tool itself is not production-ready yet!  
-⚠️ Unsure why NI does not give the ability to add an absolute package in their command line, and if there is a reason, I don't know yet!  
+⚠️ Unsure why NI does not give the ability to add an absolute package in their command line, and if there is a reason, I don't know!  
 ⚠️ The feed (not packages) is hosted in the source code repo! I had a serious dilemma here about breaking the separation of concerns principle but wanted it to be self-contained!  
 
 
