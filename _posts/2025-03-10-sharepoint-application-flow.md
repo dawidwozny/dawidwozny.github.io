@@ -34,12 +34,23 @@ In this example I will give permissions to the whole sharpoint site therfore cre
 ### Get site and drive information from Graph
 This is where simple clicking ends. For all the quieries here I used Graph Explorer.
 
-This querry will give you a list of sites in your organisation with all the details.<br>
+The following query will give you the list of all the sites in your oganisation. Pick the id of the one you want to give selective access.<br>
 `GET https://graph.microsoft.com/v1.0/sites?search=*`
 
-Use site information to retive drive information:<br>
-`GET https://graph.microsoft.com/v1.0/sites/contoso.sharepoint.com,12345,abcdef/drive`
+List site [permissions](https://learn.microsoft.com/en-us/graph/api/site-list-permissions?view=graph-rest-1.0&tabs=http):<br>
+`GET https://graph.microsoft.com/v1.0/sites/{siteId}/permissions`
 
-List folders in the drive:
-`https://graph.microsoft.com/v1.0/drives/{drive-id}/root/children`
+List site's [drives](https://learn.microsoft.com/en-us/graph/api/drive-list?view=graph-rest-1.0&tabs=http)
+The following querry will give you the list of all drives in given site. Pick the id of the one you want to give selective access..
+Drive is sharepoint Document Library. I have created a seprate one for the unatended access but still have normal access to it.<br>
+`GET https://graph.microsoft.com/v1.0/sites/{siteId}/drives`
+
+List folders in the drive. Just to ch:
+`GET https://graph.microsoft.com/v1.0/drives/{drive-id}/root/children`
+
+Pick the folder and check it's permisions. By default they should be empty
+
+`GET https://graph.microsoft.com/v1.0/sites/{siteId}/drives/{driveId}/items/{itemId}/permissions`
+
+### Give read/write permissions to your service principal
 
