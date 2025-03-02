@@ -24,7 +24,7 @@ it is not possible to use `https://graph.microsoft.com/v1.0/sites` and i did not
 `mgc sites list --search "**"` won't work when using  mgc (it does work when using graph explorer)
 
 All the sharpoint sites will have a word "site" in it so it is use as 
-`mgc sites list --search "site"`
+`mgc sites list --search "site" --select id,webUrl,displayName`
 
 ## list drives in site
 
@@ -38,3 +38,39 @@ All the sharpoint sites will have a word "site" in it so it is use as
 
 ## get folders on the drive (children of root item)
 `mgc drives items children list --drive-id  {driveIdFromPreviousStep} --drive-item-id {rootItemIdFromPreviousStep}  --select id,name,folder`
+
+
+## list permission on selcted folder (any but will be working with root one)
+`mgc drives items permissions list --drive-id  {driveIdFromPreviousStep} --drive-item-id {rootItemIdFromPreviousStep} `
+
+
+## set permission
+
+``` json
+{
+    "roles": [
+        "fullcontrol"
+    ],
+    "grantedTo": {
+        "application": {
+            "id": "{applicationId}"
+        }
+    }
+}
+```
+
+`{"roles":["fullcontrol"],"grantedTo":{"application":{"id":"{applicationId}"}}}`
+
+
+## listing permisions to site
+`mgc sites permissions list 
+
+## giving permission to site
+`mgc sites permissions create --site-id {siteIDdfkdfdf} --body '{"roles":["fullcontrol"],"grantedTo":{"application":{"id":"appIDKKDKDKDKDKFJDKFLKDF"}}}'`
+
+
+## copying file
+` mgc drives items content get --drive-id {driveId} --drive-item-id {dirveItemID} --output-file c:\test-file.txt`
+
+## login in with application flow
+
