@@ -1,6 +1,6 @@
 ---
 title: NIPKG feed with GitHub releases
-date: 2025-03-03 12:00:00 +0100
+date: 2025-03-02 12:00:00 +0100
 categories: [DevOps, NIPKG]
 tags: [labview, nipkg, gcd]     # TAG names should always be lowercase
 ---
