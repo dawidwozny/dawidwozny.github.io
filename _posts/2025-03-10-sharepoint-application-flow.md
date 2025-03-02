@@ -28,6 +28,9 @@ Fortunatelly granural permission to sharepoint was something not only me request
 ![app registrations](/assets/img/2025-03/api-permission.png)
 *Api Permissions*
 
+## Delegated credentials solutions
+Delegated credentials in esence is a method for an application to act on behalf of a user. 
+
 ### Create sharepoint site
 In this example I will give permissions to the whole sharpoint site therfore created a brand new site.
 
