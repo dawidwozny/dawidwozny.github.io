@@ -10,20 +10,15 @@ Being able to upload some files from CI/CD pipeline directly to Sharpoint was so
 It was possible possible but at the cost of security - the pipeline would have access to all the Sharepoint sites in your organisation.
 
 This changed when [Site.Selected](https://learn.microsoft.com/en-us/graph/permissions-selected-overview?tabs=http) permission had been introduced. 
-Once I read a blog [post](https://learn.microsoft.com/en-us/graph/permissions-selected-overview?tabs=http) giving overview of the solution I decided to give it a go.
+Once I read a blog [post](https://learn.microsoft.com/en-us/graph/permissions-selected-overview?tabs=http) giving an overview of the solution I decided to give it a go.
 
-I will save the complete solution with CI/CD pipeline for another time and lay foundations here.
-
+I am not going to describe the full CI/CD pipeline solution here but lay out some fundations allowing application to manipulate files on Sharepoint. What is most important, the application will use 'application credential flow' meaning it will have own identity.
 
 ## Setup - Sharepoint
-Since I want to limit the scope where my application have access to (and also not to mess up my companys existing site during testing) I have created a new sharepoint site. I have also removed default document library and created own with descriptive name. It is important to say that that document library is called drive in Graph Api. You can find short instruction for creating site [here](https://support.microsoft.com/en-us/office/create-a-site-in-sharepoint-4d1e11bf-8ddc-499d-b889-2b48d10b1ce8).
-
+The first step is to create Sharepoin site. Feel free to use existing one although it is safer to do some initiall tests on something you can break. You can find short instruction for creating site [here](https://support.microsoft.com/en-us/office/create-a-site-in-sharepoint-4d1e11bf-8ddc-499d-b889-2b48d10b1ce8). One extra thing I did was removing default document library and created new one with more meaningfull name. Something to keep in mind is that document library is called drive when accessing it through Microsoft Graph Api
 
 ## Setup - EntraID
-
-[Service Prinipal](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser)
-
-Service principal is an object which holds information about your application in Entra ID. The most important information from our point of view is where the application has access to - permissions. You can create it manually using Azure web interface, although it is easier to describe and repeat the process using set of commands.
+The next thing is to setup App Registration in EntraID. App Registration is an object in Azure holding information about your application. One of these information are api permissions the application have.
 
 ### Install Azure Cli
 Follow instructions given [here](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-windows?pivots=winget).
@@ -175,15 +170,24 @@ mgc drives items children list `
  --select id,name,folder
 ```
 
-### Copy file from Sharepoint
-Upload some file to Sharpoint manually. Find it's id using `mgc drives items children list` command and then download.
+### Download file from Sharepoint
+Upload some file to Sharpoint manually. Then find it's id using `mgc drives items children list` command and download.
 
 ``` powershell
-mgc drives items content get
-  --drive-id <drive-id>
-  --drive-item-id <drive-item-id>
-  --output-file c:\test-file.txt 
+mgc drives items content get `
+  --drive-id <drive-id> `
+  --drive-item-id <drive-item-id> `
+  --output-file c:\download-test-file.txt 
 ```
+
+### Update existing file content
+Create local file manualy. Then update content of the file on Sharepoint with content of local file.
+``` powershell
+mgc drives items content put `
+  --drive-id <drive-id> `
+  --drive-item-id <drive-item-id> `
+  --input-file c:\update-test-file.txt
+ ```
 
 ### Logout
 ``` powershell
