@@ -6,13 +6,13 @@ tags: [azure, devops, sharepoint]     # TAG names should always be lowercase
 ---
 
 # Sharepoint - unatended access
-For me, ideal way of shipping the software to the customer is through containers and the second best is through package manager. However, this is not always the case. Sometimes you simply can't do that or you need to ship also source code along with some additional files. 
+Being able to upload some files from CI/CD pipeline directly to Sharpoint was something on my wish list for a long time.
+It was possible possible but at the cost of security - the pipeline would have access to all the Sharepoint sites in your organisation.
 
-For long time, in that kind of scenarios, I was sharing special read-only folder to my sharepoint with my customer and uploading files manually. 
+This changed when [Site.Selected](https://learn.microsoft.com/en-us/graph/permissions-selected-overview?tabs=http) permission had been introduced. 
+Once I read a blog [post](https://learn.microsoft.com/en-us/graph/permissions-selected-overview?tabs=http) giving overview of the solution I decided to give it a go.
 
-Out of few things I actually hate, doing manual work is my number one. There were some ways to automate that process but that would still require using the actuall login to my microsoft account. This approach in CD pipeline was no go. When it comes sharepoint, there were a ways of giving [Service Prinicipal](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser)) permission to orgainisations sharepoint but there were not granural, meaning that you giving permission to full sharepoint in your organisation. Another no go.
-
-Fortunatelly granural permission to sharepoint was something not only me requested and finally saw a daylight. After reading [What's the difference between Application and Degelated flows for accessing OneDrive via Graph API](https://marczak.io/posts/2023/03/azure-ad-graph-application-vs-delegated-flow/) and watching [Controlling app access on a specific SharePoint site collections is now available in Microsoft Graph](https://devblogs.microsoft.com/microsoft365dev/controlling-app-access-on-specific-sharepoint-site-collections/?WT.mc_id=AZ-MVP-5003556) decided to give it ago. I would like to share my jurney here. The process is not straight forward but worth it. On this ocasion I will share doing it manually but I might add steps to do it using [Azure Cli](https://learn.microsoft.com/en-us/cli/azure/) in the future.
+I will save the complete solution with CI/CD pipeline for another time and lay foundations here.
 
 
 ## Setup - Sharepoint
