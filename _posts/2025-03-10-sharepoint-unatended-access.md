@@ -42,6 +42,17 @@ az ad app create `
 ``` powershell
  az ad sp create --id <app-id>
  ```
+> Store id from the output. This is something which is know as client-id and we will need that in the following steps.
+
+### Create client secret
+``` powershell
+az ad app credential reset `
+  --id <app-id> `
+  --display-name <secret-name> 
+
+ ```
+> Store password from the output. This is something which is know as client-secret and will need that in the following steps.<br>
+> Store tennant from the output. This is somethin known as tenant-id and will nee dthat later.
 
 ### Assign permissions to app
 When you do it for the first time it is probably easier to do it from azure portal. Once you click on permission you will see the same information I share here.
@@ -154,6 +165,15 @@ client-id-from-service-principal is value from EntraID setup mentioned earlier.
 ## Testing - delegated credentials flow
 This something what we could do in the begining because when were using mgc we actually used 'delegated credentials flow'
 This is not so exciting but I always start with something simple and working, then gradually add complexity.
+
+### List drive itmes (folder/files) in drive item
+We were doing it before on root-item in order to add permission but this is command we can use on any foler.
+``` powershell
+mgc drives items children list `
+ --drive-id  <drive-id> `
+ --drive-item-id <drive-item-id> `
+ --select id,name,folder
+```
 
 ### Copy file from Sharepoint
 Upload some file to Sharpoint manually. Find it's id using `mgc drives items children list` command and then download.
