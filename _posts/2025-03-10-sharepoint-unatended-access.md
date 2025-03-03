@@ -2,17 +2,17 @@
 title: Unatended access to sharepoint
 date: 2025-03-03 12:00:00 +0100
 categories: [DevOps, Azure]
-tags: [azure, devops, gcd]     # TAG names should always be lowercase
+tags: [azure, devops, sharepoint]     # TAG names should always be lowercase
 ---
 
+# Sharepoint - unatended access
+For me, ideal way of shipping the software to the customer is through containers and the second best is through package manager. However, this is not always the case. Sometimes you simply can't do that or you need to ship also source code along with some additional files. 
 
-# Delegated credentials flow - preparation for application credentials flow
-Delegated credentials in esence is a method for an application to act on behalf of a user. 
-This method of interacting with service like Sharepoint, or any Azure Services, is not suitable for unatended access like CI/CD pipelines. If you can't use Sharepoint and need to use Onedrive then you can try solution desribed [here](https://marczak.io/posts/2023/03/azure-ad-graph-application-vs-delegated-flow/) but generaly is more tricky than application credential flow. 
+For long time, in that kind of scenarios, I was sharing special read-only folder to my sharepoint with my customer and uploading files manually. 
 
-I deliberately called this section 'preparation for application credentails flow' becuase I will not be providing solutions with delegated credentials flow. 
+Out of few things I actually hate, doing manual work is my number one. There were some ways to automate that process but that would still require using the actuall login to my microsoft account. This approach in CD pipeline was no go. When it comes sharepoint, there were a ways of giving [Service Prinicipal](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser)) permission to orgainisations sharepoint but there were not granural, meaning that you giving permission to full sharepoint in your organisation. Another no go.
 
-Instead I will use [Microsoft Graph Cli](https://learn.microsoft.com/en-us/graph/cli/overview) and [Azure Cli](https://learn.microsoft.com/en-us/cli/azure/) to setup everything. 
+Fortunatelly granural permission to sharepoint was something not only me requested and finally saw a daylight. After reading [What's the difference between Application and Degelated flows for accessing OneDrive via Graph API](https://marczak.io/posts/2023/03/azure-ad-graph-application-vs-delegated-flow/) and watching [Controlling app access on a specific SharePoint site collections is now available in Microsoft Graph](https://devblogs.microsoft.com/microsoft365dev/controlling-app-access-on-specific-sharepoint-site-collections/?WT.mc_id=AZ-MVP-5003556) decided to give it ago. I would like to share my jurney here. The process is not straight forward but worth it. On this ocasion I will share doing it manually but I might add steps to do it using [Azure Cli](https://learn.microsoft.com/en-us/cli/azure/) in the future.
 
 
 ## Setup - Sharepoint
@@ -152,7 +152,8 @@ client-id-from-service-principal is value from EntraID setup mentioned earlier.
 
 
 ## Testing - delegated credentials flow
-This something what we could do in the begining  and it is not so exciting but always start with something simple and working, then gradually add complexity.
+This something what we could do in the begining because when were using mgc we actually used 'delegated credentials flow'
+This is not so exciting but I always start with something simple and working, then gradually add complexity.
 
 ### Copy file from Sharepoint
 Upload some file to Sharpoint manually. Find it's id using `mgc drives items children list` command and then download.
@@ -164,7 +165,32 @@ mgc drives items content get
   --output-file c:\test-file.txt 
 ```
 
+### Logout
+``` powershell
+ mgc logout
+ ```
 
+## Testing - application credentials flow
+Now the fun starts. Provided we have done everything correctly we should be able to perform all the tests but not using our credentials but application credentials.
 
-## Testing - delegated credentials flow
+### Login
+There are various ways of doing it. For full list of strategies run `mgc login --help`. I have decided on simplicit here (at least for auth) therfore using enviroment variables and client secret.
+
+#### Set enviromental variables:
+This is not the best method because variables will be stored in your powershell history but I will be deleting the secret after initial test anyway. Choose your own way of setting envariomental variables.
+``` powershell
+$env:AZURE_TENANT_ID = <tenant-id>
+$env:AZURE_CLIENT_ID = <client-id>
+$env:AZURE_CLIENT_SECRET = <client-secret>
+```
+
+``` powershell
+mgc login --strategy Environment
+```
+
+### Test with application credentials flow
+This where fun starts. If the setup is correct you will be able to do exactly the same test as with delegated credentials.
+
+## Extra commands
+### Delete permission
 
