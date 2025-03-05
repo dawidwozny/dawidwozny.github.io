@@ -43,11 +43,22 @@ az ad app create `
 ``` powershell
 az ad app credential reset `
   --id <app-id> `
-  --display-name <secret-name> 
+  --display-name <secret-name>
 
  ```
+
+ The output be like this:
+``` json
+{
+  "appId": "cryptic-guid",
+  "password": "cryptic-password",
+  "tenant": "cryptic-guid"
+}
+```
+
 > Store password from the output. This is something which is know as client-secret and will need that in the following steps.<br>
-> Store tennant from the output. This is somethin known as tenant-id and will nee dthat later.
+> Store tennant from the output. This is somethin known as tenant-id and will nee dthat later.<br>
+>Store appId from the output. This is somethin known as client-id and will nee dthat later.
 
 ### Assign permissions to app
 When you do it for the first time it is probably easier to do it from azure portal. Once you click on permission you will see the same information I share here.
@@ -66,7 +77,7 @@ These are Graph permissions.
 ``` powershell
 az ad app permission add `
   --id <appId> `
-  --api 00000003-0000-0000-c000-000000000000 ` 
+  --api 00000003-0000-0000-c000-000000000000 `
   --api-permissions 883ea226-0bf2-4a8f-9f9d-92c9162a727d=Role
 ```
 
