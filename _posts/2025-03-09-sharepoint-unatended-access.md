@@ -10,7 +10,7 @@ tags: [azure, devops, sharepoint]     # TAG names should always be lowercase
 
 # Sharepoint - unatended access
 Being able to upload some files from CI/CD pipeline directly to Sharpoint was something on my wish list for a long time.
-It was possible possible but at the cost of security - the pipeline would have access to all the Sharepoint sites in your organisation.
+It was possible but at the cost of security - the pipeline would have access to all the Sharepoint sites in your organisation.
 
 This changed when [Site.Selected](https://learn.microsoft.com/en-us/graph/permissions-selected-overview?tabs=http) permission had been introduced. 
 Once I read this [blog post](https://learn.microsoft.com/en-us/graph/permissions-selected-overview?tabs=http) decided to give it a go.
