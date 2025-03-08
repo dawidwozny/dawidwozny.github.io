@@ -113,7 +113,7 @@ One item of the array will look like this:
     "id": "your-company.sharepoint.com,guid-1,guid-2",
     "webUrl": "https://your-company-name.sharepoint.com/sites/YourSite",
     "displayName": "YourSite"
-  },
+  }
 ```
 The display name should match the name of your Sharpoint site.
 > Note:  You need to use full 'your-company.sharepoint.com,guid-1,guid-2' as site-id. 
