@@ -10,12 +10,14 @@ Being able to upload some files from CI/CD pipeline directly to Sharpoint was so
 It was possible possible but at the cost of security - the pipeline would have access to all the Sharepoint sites in your organisation.
 
 This changed when [Site.Selected](https://learn.microsoft.com/en-us/graph/permissions-selected-overview?tabs=http) permission had been introduced. 
-Once I read a blog [post](https://learn.microsoft.com/en-us/graph/permissions-selected-overview?tabs=http) giving an overview of the solution I decided to give it a go.
+Once I read this [blog post](https://learn.microsoft.com/en-us/graph/permissions-selected-overview?tabs=http) I decided to give it a go.
 
-I am not going to describe the full CI/CD pipeline solution here but lay out some fundations allowing application to manipulate files on Sharepoint. What is most important, the application will use 'application credential flow' meaning it will have own identity.
+This is not going to be full CI/CD pipeline solution but fundations allowing application to manipulate files on Sharepoint. What is most important, the application will use 'application credential flow' meaning it will have own identity and will have full access to single Sharepoint site. 
+
+In the future I plan to investigate more granural level access and describe using [rclone](https://rclone.org/) for upload of the artifacts.
 
 ## Setup - Sharepoint
-The first step is to create Sharepoin site. Feel free to use existing one although it is safer to do some initiall tests on something you can break. You can find short instruction for creating site [here](https://support.microsoft.com/en-us/office/create-a-site-in-sharepoint-4d1e11bf-8ddc-499d-b889-2b48d10b1ce8). One extra thing I did was removing default document library and created new one with more meaningfull name. Something to keep in mind is that document library is called drive when accessing it through Microsoft Graph Api
+The first step is to create Sharepoin site. You can find short instruction for creating site [here](https://support.microsoft.com/en-us/office/create-a-site-in-sharepoint-4d1e11bf-8ddc-499d-b889-2b48d10b1ce8). Something to keep in mind is that document library is called drive when accessing it through Microsoft Graph Api
 
 ## Setup - EntraID
 The next thing is to setup App Registration in EntraID. App Registration is an object in Azure holding information about your application. One of these information are api permissions the application have.
@@ -56,23 +58,14 @@ az ad app credential reset `
 }
 ```
 
-> Store password from the output. This is something which is know as client-secret and will need that in the following steps.<br>
-> Store tennant from the output. This is somethin known as tenant-id and will nee dthat later.<br>
->Store appId from the output. This is somethin known as client-id and will nee dthat later.
+> Store **password**. I will call it **client-secret** in the following steps.<br>
+> Store **tennant**. I will call it **tenant-id** in the following steps.<br>
+> Store **appId**. I will call it **client-id** in the following steps.
 
 ### Assign permissions to app
-When you do it for the first time it is probably easier to do it from azure portal. Once you click on permission you will see the same information I share here.
+When you do it for the first time it is probably easier to do it from azure portal. However, I am writing this post also for my future self and I prefer to do it this way. Once you click on permission azure portal you will see the same information I am sharing here.
 
-Also if you don't trust me on these permission( i would not copy paste this cryptic permissions from the internet ;)
-maybe it is better to do it manually.
-
-The permissions we need are:
-* Sites.Selected
-* Sites.Selected
-
-These are Graph permissions.
-
-=Role means this is application permision and not delegated permission
+We need give Sites.Selected permission to Graph Api.
 
 ``` powershell
 az ad app permission add `
@@ -80,11 +73,10 @@ az ad app permission add `
   --api 00000003-0000-0000-c000-000000000000 `
   --api-permissions 883ea226-0bf2-4a8f-9f9d-92c9162a727d=Role
 ```
-
-`00000003-0000-0000-c000-000000000000` is Microsoft Graph Api Id.<br>
-`883ea226-0bf2-4a8f-9f9d-92c9162a727d` is Site.Selected permission.<br>
-`883ea226-0bf2-4a8f-9f9d-92c9162a727d=Role` means that Site.Selected permission is given to application and it is not delegated permission
-
+`=Role` means this is an application permision and not a delegated permission.<br>
+`00000003-0000-0000-c000-000000000000` is Microsoft Graph Api id.<br>
+`883ea226-0bf2-4a8f-9f9d-92c9162a727d` is Site.Selected permission id.<br>
+`883ea226-0bf2-4a8f-9f9d-92c9162a727d=Role` means that Site.Selected is an application permission.
 
 ### Grant admin consnent
 ``` powershell
@@ -105,44 +97,41 @@ Running the following command will open browser and perform authentication.<br>
 ### List sites
 This step is a bit tricky.
 For the reason described [here](https://stackoverflow.com/questions/75917021/sites-list-getting-empty-results-in-graph-api)
-it is not possible to use simple `https://graph.microsoft.com/v1.0/sites` and i did not want to complicate this post with creating application flow authentication.
-`mgc sites list --search "**"` won't work when using  mgc (it does work when using graph explorer)
+it is not possible to use simple `https://graph.microsoft.com/v1.0/sites` and i did not want to complicate this post with creating additional application flow authentication.
+`mgc sites list --search "**"` won't work when using  mgc. It does work when using [Graph Explorer](https://developer.microsoft.com/en-us/graph/graph-explorer).
 
-All the sharpoint sites will have a word "site" in it so you can use the folowing command. Additionaly the output  is limited only to id, webUrl and displayName.
+All the sharpoint sites will have a word "site" in it, so you can use the folowing command. Additionaly the output is limited only to id, webUrl and displayName.
 ``` powershell
 mgc sites list --search "site" --select id,webUrl,displayName
 ```
 
-One item of array
+One item of the array will look like this:
 ```json
   {
-    "id": "your-company-name.com,guid-1,guid-2",
+    "id": "your-company.sharepoint.com,guid-1,guid-2",
     "webUrl": "https://your-company-name.sharepoint.com/sites/YourSite",
     "displayName": "YourSite"
   },
 ```
 The display name should match the name of your Sharpoint site.
+> Note:  You need to use full 'your-company.sharepoint.com,guid-1,guid-2' as site-id. 
 
 ### List site permisions
 ``` powershell
  mgc sites permissions list --site-id <site-id>
 ```
 
-### Set site permissions
+### Create site permission
 We don't need more than read.
 This is orgin of [body](https://learn.microsoft.com/en-us/graph/api/site-post-permissions?view=graph-rest-1.0&tabs=http)
 
 ```powershell
 mgc sites permissions create `
  --site-id <site-id> `
- --body '{"roles":["read"],"grantedToIdentities":[{"application":{"id":"<client-id>","displayName":"<som-name>"}}]}'
+ --body '{"roles":["fullcontrol"],"grantedToIdentities":[{"application":{"id":"<client-id>","displayName":"<som-name>"}}]}'
 ```
 
->>>>> actually only works with 'fullcontrol' to be checked
-
 ### Confirm permission
-When you just list permission you will not get role applied.
-Therfore run  get permission for site. Then with it's id run:
 
 ```powershell
 mgc sites permissions get `
@@ -150,6 +139,9 @@ mgc sites permissions get `
  --permission-id <permission-id>
 ```
 
+## Testing - delegated credentials flow
+I call this section 'delegated credentials flow' because this is what is being used when loging in using `mgc login --scopes Sites.Manage.All --strategy InteractiveBrowser`. You delegate your own permissions to mgc.
+This is not so exciting but let's play with some command here and then repeat the process with 'application credentials flow'.
 
 ### List drives in site
 ``` powershell
@@ -167,7 +159,7 @@ mgc drives root get `
   --drive-id  <drive-id>
 ```
 
-### List folders on the drive's root item
+### List drive items (folders/files) on the drive's root item
 ``` powershell
 mgc drives items children list `
  --drive-id  <drive-id> `
@@ -175,39 +167,13 @@ mgc drives items children list `
  --select id,name,folder
 ```
 
-### List permission on selcted drive item (folder)
-``` powershell
-mgc drives items permissions list `
-  --drive-id <drive-id> `
-  --drive-item-id <root-item-id> 
-```
-It is possible that there will be no permissions set at all. Run the command again once you set the new ones.
+### List drive itmes (folder/files) in a drive item (folder)
+You can run exactly the same command as before but just using chosen folder id.
 
-### Set drive item (folder) permission 
-
-``` powershell
-mgc drives items permissions create `
-  --drive-id <drive-id> `
-  --drive-item-id <root-item-id> `
-  --body '{"roles":["fullcontrol"],"grantedTo":{"application":{"id":"<client-id>"}}}'
-```
-
-For simplicity I have granted full control here.<br>
-client-id-from-service-principal is value from EntraID setup mentioned earlier.
-
-### Verify permissions
-Run List permissions again, will display also role.
-
-## Testing - delegated credentials flow
-This something what we could do in the begining because when were using mgc we actually used 'delegated credentials flow'
-This is not so exciting but I always start with something simple and working, then gradually add complexity.
-
-### List drive itmes (folder/files) in drive item
-We were doing it before on root-item in order to add permission but this is command we can use on any foler.
 ``` powershell
 mgc drives items children list `
  --drive-id  <drive-id> `
- --drive-item-id <drive-item-id> `
+ --drive-item-id <your-nested-folder-item-id> `
  --select id,name,folder
 ```
 
@@ -222,7 +188,7 @@ mgc drives items content get `
 ```
 
 ### Update existing file content
-Create local file manualy. Then update content of the file on Sharepoint with content of local file.
+Create local file manualy. Then update content of the file on Sharepoint with content of the local file.
 ``` powershell
 mgc drives items content put `
   --drive-id <drive-id> `
@@ -239,16 +205,17 @@ mgc drives items content put `
 Now the fun starts. Provided we have done everything correctly we should be able to perform all the tests but not using our credentials but application credentials.
 
 ### Login
-There are various ways of doing it. For full list of strategies run `mgc login --help`. I have decided on simplicit here (at least for auth) therfore using enviroment variables and client secret.
+There are various ways of doing it. For full list of strategies run `mgc login --help`. I have decided on simplicity here (at least in terms of authentication) therfore using enviroment variables and client secret.
 
 #### Set enviromental variables:
-This is not the best method because variables will be stored in your powershell history but I will be deleting the secret after initial test anyway. Choose your own way of setting envariomental variables.
+The following is not the best method for setting environmental variables because variables will be stored in your powershell history. Choose your own method, just wanted to present what variables are required.
 ``` powershell
 $env:AZURE_TENANT_ID = <tenant-id>
 $env:AZURE_CLIENT_ID = <client-id>
 $env:AZURE_CLIENT_SECRET = <client-secret>
 ```
 
+#### Run login command:
 ``` powershell
 mgc login --strategy Environment
 ```
@@ -257,8 +224,7 @@ mgc login --strategy Environment
 This where fun starts. If the setup is correct you will be able to do exactly the same test as with delegated credentials.
 
 
-> be patient maybe it is not propagated imediately <br>
->  check your permissions
-## Extra commands
-### Delete permission
+## Summary
+As I mentioned in the begining this is no complete solution for CI/CD but it is the most difficult part. 
+Using `mgc` is definitely not most convinient way of manipulating files on Sharepoint. You probably noticed that I haven't even tried things like creating file or directory. In the future will present how using [rclone](https://rclone.org/) can make things simpler.
 
