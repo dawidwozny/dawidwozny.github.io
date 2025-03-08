@@ -99,7 +99,7 @@ Follow instructions given [here](https://learn.microsoft.com/en-us/graph/cli/ins
 ### Login
 Running the following command will open browser and perform authentication.<br>
 ``` powershell
- mgc login --scopes Sites.FullControl.All --strategy InteractiveBrowser
+ mgc login --scopes Sites.Manage.All --strategy InteractiveBrowser
 ```
 
 ### List sites
@@ -110,7 +110,16 @@ it is not possible to use simple `https://graph.microsoft.com/v1.0/sites` and i 
 
 All the sharpoint sites will have a word "site" in it so you can use the folowing command. Additionaly the output  is limited only to id, webUrl and displayName.
 ``` powershell
-mgc sites list --search "site" --select id,webUrl,displayName`
+mgc sites list --search "site" --select id,webUrl,displayName
+```
+
+One item of array
+```json
+  {
+    "id": "your-company-name.com,guid-1,guid-2",
+    "webUrl": "https://your-company-name.sharepoint.com/sites/YourSite",
+    "displayName": "YourSite"
+  },
 ```
 The display name should match the name of your Sharpoint site.
 
@@ -120,15 +129,33 @@ The display name should match the name of your Sharpoint site.
 ```
 
 ### Set site permissions
+We don't need more than read.
+This is orgin of [body](https://learn.microsoft.com/en-us/graph/api/site-post-permissions?view=graph-rest-1.0&tabs=http)
+
 ```powershell
-mgc sites permissions create
- --site-id <site-id>
- --body {"roles":["fullcontrol"],"grantedTo":{"application":{"id":"<client-id>"}}}
+mgc sites permissions create `
+ --site-id <site-id> `
+ --body '{"roles":["read"],"grantedToIdentities":[{"application":{"id":"<client-id>","displayName":"<som-name>"}}]}'
 ```
+
+>>>>> actually only works with 'fullcontrol' to be checked
+
+### Confirm permission
+When you just list permission you will not get role applied.
+Therfore run  get permission for site. Then with it's id run:
+
+```powershell
+mgc sites permissions get `
+ --site-id <site-id> `
+ --permission-id <permission-id>
+```
+
 
 ### List drives in site
 ``` powershell
-mgc sites drives list --site-id <site-id> --select id,name
+mgc sites drives list `
+  --site-id <site-id> `
+  --select id,name
 ```
 The name should match document library name in Sharepoint.
 
@@ -136,7 +163,8 @@ The name should match document library name in Sharepoint.
 Files are not stored directly on drive object but on the root of the drive. Therfore we need to find it's id.
 
 ``` powershell
-mgc drives root get --drive-id  <drive-id>
+mgc drives root get `
+  --drive-id  <drive-id>
 ```
 
 ### List folders on the drive's root item
@@ -158,15 +186,17 @@ It is possible that there will be no permissions set at all. Run the command aga
 ### Set drive item (folder) permission 
 
 ``` powershell
-mgc drives items permissions create
-  --drive-id <drive-id>
-  --drive-item-id <root-item-id>
-  --body {"roles":["fullcontrol"],"grantedTo":{"application">:{"id":"<client-id>"}}}
+mgc drives items permissions create `
+  --drive-id <drive-id> `
+  --drive-item-id <root-item-id> `
+  --body '{"roles":["fullcontrol"],"grantedTo":{"application":{"id":"<client-id>"}}}'
 ```
 
 For simplicity I have granted full control here.<br>
 client-id-from-service-principal is value from EntraID setup mentioned earlier.
 
+### Verify permissions
+Run List permissions again, will display also role.
 
 ## Testing - delegated credentials flow
 This something what we could do in the begining because when were using mgc we actually used 'delegated credentials flow'
@@ -226,6 +256,9 @@ mgc login --strategy Environment
 ### Test with application credentials flow
 This where fun starts. If the setup is correct you will be able to do exactly the same test as with delegated credentials.
 
+
+> be patient maybe it is not propagated imediately <br>
+>  check your permissions
 ## Extra commands
 ### Delete permission
 
