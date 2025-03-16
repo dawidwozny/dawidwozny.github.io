@@ -1,21 +1,20 @@
 ---
-title: Clasic and fluent builder
+title: Builder Pattern
 date: 2025-03-16 12:00:00 +0100
-categories: [C#, Azure]
+categories: [C#, Patterns]
 tags: [C#, patterns, builder]     # TAG names should always be lowercase
 mermaid: true
 ---
 
 # Introduction
-The Builder pattern is one of my favorite programming patterns. It is straightforward, at least in its basic form, and can significantly enhance code quality. Recently, I used it to perform integration tests for a CLI tool and wanted to share some thoughts.
+The Builder pattern is one of my favorite programming patterns. It is straightforward, at least in it's basic form, and can significantly enhance code quality. Recently, I used it to perform integration tests for a CLI tool and wanted to share some thoughts.
 
 ## Problem
-Integration tests are designed to verify how different components work together. For a REST API, this typically involves sending HTTP requests. For a CLI tool, it requires executing a command with its respective arguments and options.
+Integration tests are designed to verify how different components work together. For a REST API, this typically involves sending some HTTP requests. For a CLI tool, it requires executing a command with its respective arguments and options.
 
-If I only had a few simple commands, no options and testing just happy paths, I probably wouldn't have bothered with anything fancy. However, things were getting messy, and I wanted to do something about it. Additionally, the software was in its early stages, and I knew the interface would be evolving.
+If I only had a few simple commands, no options and testing just happy paths, I probably wouldn't have bothered with anything fancy. However, the things were getting messy, and I wanted to do something about it. Additionally, the software was in its early stages, and I knew the interface would be changing.
 
 ### Sample
-
 Let's consider a sample command I worked on.
 
 ``` powershell
@@ -27,13 +26,13 @@ gcd nipkg build `
     --package-destination-dir 'build-test-output-dir'
 ```
 
-When translated to C# string it looks awfull.
+When translated to C# string it looks just awfull.
 
 ``` csharp
 var command = "gcd nipkg build --content-src-dir 'testdata\\nipkg\\test-pkg-content' --target-root-dir 'BootVolume/manual-tests/gcd-build-test' --package-name 'gcd-build-test' --package-version '0.5.0-1' --package-destination-dir 'build-test-output-dir'
 ```
 
-But can easily be improved with array of strings.
+But can be easily improved with array of strings.
 ``` csharp
 var command = new  string[]
 {
@@ -47,13 +46,12 @@ var command = new  string[]
     "--package-destination-dir","build-test-output-dir"
 };
 ```
-
-This approach is simple and relatively clean in comparison to amount of required code but got some downsides:
+This approach is simple and relatively clean in relation to required code but got some downsides:
 * Section `"gcd","nipkg","build"` need to be repeated for every call.
 * Option names need to be memorized by programmer (me) or checked/copied every single time.
 * Option names are being repeated with every call and when they change, need to be replaced everywhere.
 
-If I were building interface for a command to use in my software, I would probably use some DTO and function to call the command.
+If I were building interface for a command to use in a software, I would probably use some DTO and function to call the command.
 ``` csharp
 public record BuildCommandDto(
     string ContentSrcDir,
@@ -63,47 +61,49 @@ public record BuildCommandDto(
     string PackageDestinationDir);
 ```
 
-However, in this perticular case I wanted to have some flexibility to:
-* send command with not supported option
-* send command without required option
-* send command with typo
+However, in this particular case, I wanted the flexibility to:
 
-and still:
-* don't need to memorize option names
-* don't repeat begining of the command 
-* change option in one place if changes
+- Send a command with an unsupported option. 
+- Execute a command without a required option.
+- Include a command with a typo.
 
-I know, it is like eating apple and having apple but it is possible with builders.
+While still ensuring that I:
 
-Before talking about the actuall solution let me elaborate more on builder itself. 
+- Don't have to memorize option names.
+- Avoid repeating the beginning of the command.
+- Can update an option in one place if changes are needed.
 
-### Builders
-There are quie a few variation of builder pattern like:
-* Classic Builder
-* Fluent Builder
-* Fluent Builder With Recursive Generics
-* Facade Builder
+I know, it is like eating an apple and having an apple but it is possible with builders.
 
-but here I will be describing just the basic ones:
-* Classic Builder
-* Fluent Builder
+## Builders
+Before getting to the actuall solution, let me start with some builder examples.
 
-The initial examples I give, will not solve the actuall problem. They are actually very similar to building array. Their sole purpose is to compare Classic and Fluent Builders to each other.
+There are quite a few variation of builder pattern like:
+* **Classic Builder**
+* **Fluent Builder**
+* **Fluent Builder With Recursive Generics**
+* **Faceted Builder**
+
+but I will focus on just the basic ones:
+* **Classic Builder**
+* **Fluent Builder**
+
+The initial examples do not solve the actuall problem. They are actually very similar to building an array. Their sole purpose is to show differences between **Classic** and **Fluent** Builders.
 
 ### Clasic Builder
-Classic builder is something I rarely use and not because it is bad. I just love the syntax Fluent Builder so much that don't want to use anything else. However, Fluent Builder can pose some chalanges when it comes to inheritance and wanted to compare it to Classic Builder in that regards.
+I rarely use the **Classic Builder**, not because it's bad, but simply because I love the **Fluent Builder** syntax so much that I prefer it over anything else. However, **Fluent Builder** can present some challenges with inheritance, so I wanted to show that there are alternatives.
 
 #### Usage
 ``` csharp
 var builder = new ClassicCommandBuilder();
-builder.WithArgument("gcd");
-builder.WithArgument("nipkg");
-builder.WithArgument("build");
-builder.WithOption("--content-src-dir","testdata\\nipkg\\test-pkg-content");
-builder.WithOption("--target-root-dir","BootVolume/manual-tests/gcd-build-test");
-builder.WithOption("--package-name","cd-build-test");
-builder.WithOption("--package-version","0.5.0-1");
-builder.WithOption("--package-destination-dir","build-test-output-dir");
+builder.AddArgument("gcd");
+builder.AddArgument("nipkg");
+builder.AddArgument("build");
+builder.AddOption("--content-src-dir","testdata\\nipkg\\test-pkg-content");
+builder.AddOption("--target-root-dir","BootVolume/manual-tests/gcd-build-test");
+builder.AddOption("--package-name","cd-build-test");
+builder.AddOption("--package-version","0.5.0-1");
+builder.AddOption("--package-destination-dir","build-test-output-dir");
 var command = builder.Build();
 ```
 
@@ -111,12 +111,12 @@ var command = builder.Build();
 ``` csharp
 public class ClassicCommandBuilder
 {
-    private readonly List<string> _args = [];
-    public void WithArgument(string argument)
+    private readonly List[string] _args = [];
+    public void AddArgument(string argument)
     {
         _args.Add(argument);
     }
-    public void WithOption(string name, string argument)
+    public void AddOption(string name, string argument)
     {
         _args.Add(name);
         _args.Add(argument);
@@ -129,15 +129,15 @@ public class ClassicCommandBuilder
 ``` mermaid
 classDiagram
     class ClassicCommandBuilder {
-        - List<string> _args
-        + WithArgument(string argument)
-        + WithOption(string name, string argument)
+        - List[string] _args
+        + AddArgument(string argument)
+        + AddOption(string name, string argument)
         + Build() string[]
     }
 ```
 ### Fluent Builder
-Fluent Builder is my first choice when it comes to builders.
-Fluent interface is something which allows you to chain function and is quite easy to implement. Every function must return Builder itself instead of void.
+**Fluent Builder** is my go-to when it comes to builders.
+A fluent interface lets you chain functions together, and it's pretty simple to set up. The key is that each function should return the Builder itself.
 
 #### Usage
 ```csharp
@@ -157,7 +157,7 @@ var command = new FluentCommandBuilder()
 ```csharp
 public class FluentCommandBuilder
 {
-    private readonly List<string> _args = [];
+    private readonly List[string] _args = [];
     public FluentCommandBuilder WithArgument(string argument)
     {
         _args.Add(argument);
@@ -176,7 +176,7 @@ public class FluentCommandBuilder
 ``` mermaid
 classDiagram
     class FluentCommandBuilder {
-        - List<string> _args
+        - List[string] _args
         + FluentCommandBuilder WithArgument(string argument)
         + FluentCommandBuilder WithOption(string name, string argument)
         + string[] Build()
@@ -191,7 +191,9 @@ classDiagram
 * can remove some options for testing purposes
 * can introduce some typos in option name for testing purposes
 
-> Note: I have reused 'FluentArgumentsBuilder' using composition and created methods `WithArgument`, `WithOption` that delegates work to `FluentArgumentsBuilder` As much as I would like to say that this is because I favour 'composition over inheritance', which I do, this is not the case.The actual truth is that I wanted to use inheritance here. I got some commands which share the same options and this approach could save me a lot of work but I couldn't. At least in the first go.
+> Note: I have reused 'FluentArgumentsBuilder' using composition and created methods `WithArgument`, `WithOption` that delegates work to `FluentArgumentsBuilder`
+
+ As much as I would like to say it's because I favour 'composition over inheritance', which I do, this is not the case. The actual truth is that I wanted to use inheritance here. I got some commands which share the same options and this approach could save me a lot of work but I couldn't. At least in the first attempt.
 
 #### Usage
 ```csharp
@@ -266,7 +268,7 @@ public class BuildCommandBuilder
 ``` mermaid
 classDiagram
     class FluentCommandBuilder {
-        - List<string> _args
+        - List[string] _args
         + FluentCommandBuilder WithArgument(string argument)
         + FluentCommandBuilder WithOption(string name, string argument)
         + string[] Build()
@@ -289,11 +291,9 @@ classDiagram
 ```
 ### Fluent Builder with intheritance
 #### Problem
-So what is the big deal with **Fluent Builder** using inheritance? At the core of **Fluent Builder** is the fact that it returns itself. As soon as you use method of parent class, it will return parent builder and you won't have access to child class methods anymore. This problem does not exist with **Classic Builder** since you don't relly on what the method returns and mutate builder's data instead.
+At the core of **Fluent Builder** is the fact that it returns itself. As soon as you use method of parent class, it will return parent builder and you won't have access to child class methods anymore. This problem does not exist with **Classic Builder** since you don't depend on what the method returns and mutate builder's data instead. On the other hand you could use **Fluent Builder** the same way **Clasic Builder** is used but then what's the point creating it this way in the first place.
 
-Let's consider implementation below.
-
-Let's assume that I have defined `BuildCmdArgumentBuilderUsingInheritance` using inheritance from `FluentArgumentBuilder` the code become a bit simpler:
+Let's consider implementation below. The line 5 will cause a compilation error.
 
 #### Usage - broken
 ``` csharp
@@ -352,7 +352,7 @@ public class BuildCommandBuilderUsingInheritance : FluentCommandBuilder
 ``` mermaid
 classDiagram
     class FluentCommandBuilder {
-        - List<string> _args
+        - List[string] _args
         + FluentCommandBuilder WithArgument(string argument)
         + FluentCommandBuilder WithOption(string name, string argument)
         + string[] Build()
@@ -369,14 +369,6 @@ classDiagram
 
     BuildCommandBuilderUsingInheritance --|> FluentCommandBuilder : "Inherits"
 ```
-
-The main problem with using Fluent Builder with inheritance is that:
-**parent function will return parent builder**. Meaning that as soon as I call `WithOption("","")` which is defined in `FluentArgumentBuilder` I will no longer has access to methods defined on `BuildCmdArgumentBuilderUsingInheritance`
-
-
-
-You would not have this problem if classic builder was used but that's not what I wanted.
-
 #### Solution
 The solution to this chalange is **Fluent Builder With Recursive Generics** and I will be covering this in the future posts.
 
