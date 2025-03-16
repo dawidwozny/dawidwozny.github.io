@@ -6,8 +6,15 @@ tags: [C#, patterns, builder]     # TAG names should always be lowercase
 ---
 
 
-# Intro
-Builder is one of my favourite programing pattern. It is simple, at least in it's base form, and very useful. It's indispensable in making test neat and maintainable. I started to write integration test for a command line tool. As you can imagine in comand line everything is esentailly string. When command is simple it is rather straightforward task to write, however, when you start using options and you have quite a few of them, also when you want to simulate variouse cases then things starting to get a bit messy. Using builder seemd to be perfect match to provide strongly(ish) typed interface.
+# Introduction
+Builder is one of my favourite programing pattern. It is simple, at least in it's base form, and can drastically improve readability. I have recently used it to make my integration tests more maintainable and would like to share my thoughts.
+
+## Problem
+Integration test are type of tests where you want to test some components alltoghether. When it comes to REST API this would involve sending some HTTP request. The service I was testing here was actually comand line tool and in order to test it I had to send command along with arguments and options.
+
+If I had just a few commands without options and testing just happy cases I would probably did not bother doing anything fancy. However, things were getting messy and wanted to do something about it. Additionaly the software were in early stage and I knew will be changing interface. 
+
+Let's consider command to be executed in pwsh:
 
 ``` powershell
 gcd nipkg build `
@@ -18,19 +25,76 @@ gcd nipkg build `
     --package-destination-dir 'build-test-output-dir'
 ```
 
-If you would like to transform it into C# code this would look like
+When translated to C# string looks:
+
 ``` csharp
-var arguments = "gcd nipkg build --content-src-dir 'testdata\nipkg\test-pkg-content' --target-root-dir 'BootVolume/manual-tests/gcd-build-test' --package-name 'gcd-build-test' --package-version '0.5.0-1' --package-destination-dir 'build-test-output-dir'
+var command = "gcd nipkg build --content-src-dir 'testdata\\nipkg\\test-pkg-content' --target-root-dir 'BootVolume/manual-tests/gcd-build-test' --package-name 'gcd-build-test' --package-version '0.5.0-1' --package-destination-dir 'build-test-output-dir'
 ```
 
-And yes you can make some tweaks to make it better but I am not a fan of manipulating strings
+This can be easily improved with string array:
+``` csharp
+var cmd = new  string[]
+{
+    "gcd",
+    "nipkg",
+    "build",
+    "--content-src-dir", "testdata\nipkg\test-pkg-content",
+    "--target-root-dir", "BootVolume/manual-tests/gcd-build-tes",
+    "--package-name","cd-build-test",
+    "--package-version","0.5.0-1",
+    "--package-destination-dir","build-test-output-dir"
+};
+```
+
+However, the problems I have got is that:
+* Section `"gcd","nipkg","build"` need to be repeated for every call.
+* Option names need to be memorized by programmer (me) or checked/copied every single time.
+* Option names are being repeated with every call and If they were to be changed need to be chaned everywhere.
+
+The software was in early stage and haven't decided on the interface yet. Did not want to change everything once the option name has been changed. Additionaly wanted to a test few cases with every command.
+
+If I were building interface for command I knwo it works, I would probably use some DTO and function to call it.
+``` csharp
+public record BuildCommandDto(
+    string ContentSrcDir,
+    string TargetDir,
+    string PackageName,
+    string PackageVersion,
+    string PackageDestinationDir);
+```
+
+But in this perticular case I actually wanted to have some flexibility to:
+* send command with not supported option
+* send command without required option
+* send command with typo
+
+And still:
+* don't need to memorize option names
+* don't repeat begining of the command 
+* change option in one place
+
+I know, it is like eating apple and having apple but it is possible with builders.
+
+Before talking about the actuall solution let me describe builder itself. 
 
 
 ### Builders
+There are quie a few variation of builder pattern like:
+* Classic Builder
+* Fluent Builder
+* Fluent Builder With Recursive Generics
+* Facade Builder
+
+but here I will be describing just the basic ones:
+* Classic Builder
+* Fluent Builder
+
+The initial examples I give, will not solve the actuall problem. They are actually very similar to building array. Their sole purpose is to compare Classic and Fluent Builders to each other.
 
 ### Clasic Builder
-Classic builder is something I rarely use but it's good to mention it in the begining
+Classic builder is something I rarely use and not because it is bad. I just love the syntax Fluent Builder so much that don't want to use anything else. However, Fluent Builder can pose some chalanges when it comes to inheritance and wanted to compare it to Classic Builder in that regards.
 
+#### Implementation
 ``` csharp
 public class ClassicArgumentBuilder
 {
@@ -46,7 +110,7 @@ public class ClassicArgumentBuilder
     public string[] Build() => _args.ToArray();
 }
 ```
-It's usage
+#### Usage
 
 ``` csharp
 var builder = new ClassicArgumentBuilder();
@@ -58,14 +122,14 @@ builder.AddOption("--target-root-dir","BootVolume/manual-tests/gcd-build-test");
 builder.AddOption("--package-name","cd-build-test");
 builder.AddOption("--package-version","0.5.0-1");
 builder.AddOption("--package-destination-dir","build-test-output-dir");
-
 var aruments = builder.Build();
 ```
 
 ### Fluent Builder
-Fluent build is something I use very often and I am big fan of fluent interface.
-Fluent interface is something which allows you to chain function and write them in a very neat way.
+Fluent Builder is my first choice when it comes to builders.
+Fluent interface is something which allows you to chain function and is quite easy to implement. Every function must return Builder itself instead of void.
 
+#### Implementation
 ```csharp
 public class FluentArgumentBuilder
 {
@@ -83,7 +147,7 @@ public class FluentArgumentBuilder
     public string[] Build() => _args.ToArray();
 }
 ```
-Usage
+#### Usage
 ```csharp
 var aruments = new FluentArgumentBuilder()
     .AddArgument("gcd")
@@ -96,21 +160,26 @@ var aruments = new FluentArgumentBuilder()
     .AddOption("--package-destination-dir", "build-test-output-dir")
     .Build();
 ```
-## Next step
-Using fluent interface allready some improvements but still had to repeat a lot an remember all the options.
+## Solution
+`FluentCommandBuilder` improved the interface slightly but not as much for me to choose it over `string[]` implementation. The actual solution is presented below. This approach gives me the best results:
+* begining of the command is prepended automatically
+* no need to remember all the option names
+* option names can be changed in one place
+* neat syntax
+* can introduce some typos in option name if necessary
 
-So I wrote specific builder for the specific command.
-
+#### Usage
 ```csharp
 var arguments = new BuildCmdArgBuilder()
     .WithContentSrcDirOption("testdata\nipkg\test-pkg-content")
     .WithTargetRootDirOption("BootVolume/manual-tests/gcd-build-test")
-    .WithPackageNameOption("cd-build-test")
+    .WithOption()
     .WithPackageVersionOption("0.5.0-1")
     .WithPackageDestinationDirOption("build-test-output-dir")
     .Build();
 ```
 
+#### Implementation
 ```csharp
 public class BuildCmdArgBuilder
 {
@@ -159,7 +228,7 @@ Note that I have reused previous 'FluentArgumentsBuilder' using composition. The
 * I tend to use 'composition over inheritance' rule whenever I can. Although in this perticular case I knew that I will have many options with the same name for other commands and actually wanted to use.
 * Using Fluent Builder with is chalanging
 
-### Chalange of using Fluent Builder with intheritance
+### Fluent Builder with intheritance
 
 Let's assume that I have defined `BuildCmdArgumentBuilderUsingInheritance` using inheritance from `FluentArgumentBuilder` the code become a bit simpler:
 ```csharp
