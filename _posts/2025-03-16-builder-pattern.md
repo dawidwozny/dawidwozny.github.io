@@ -5,7 +5,9 @@ categories: [C#, Patterns]
 tags: [C#, patterns, builder]     # TAG names should always be lowercase
 mermaid: true
 ---
-
+![Builder Pattern](/assets/img/2025-03/builder.jpg)
+Photo by [Ricardo Gomez Angel](https://unsplash.com/@rgaleriacom?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash) on [Unsplash](https://unsplash.com/photos/man-in-black-jacket-and-yellow-helmet-jYNvXKTUYvs?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash)
+      
 # Introduction
 The Builder pattern is one of my favorite programming patterns. It is straightforward, at least in it's basic form, and can significantly enhance code quality. Recently, I used it to perform integration tests for a CLI tool and wanted to share some thoughts.
 
