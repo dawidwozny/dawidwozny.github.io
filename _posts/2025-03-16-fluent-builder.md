@@ -7,14 +7,16 @@ mermaid: true
 ---
 
 # Introduction
-Builder is one of my favourite programing pattern. It is simple, at least in it's base form, and can drastically improve readability. I have recently used it to make my integration tests more maintainable and would like to share my thoughts.
+The Builder pattern is one of my favorite programming patterns. It is straightforward, at least in its basic form, and can significantly enhance code quality. Recently, I used it to perform integration tests for a CLI tool and wanted to share some thoughts.
 
 ## Problem
-Integration test are type of tests where you want to test some components alltoghether. When it comes to REST API this would involve sending some HTTP request. The service I was testing here was actually comand line tool and in order to test it I had to send command along with arguments and options.
+Integration tests are designed to verify how different components work together. For a REST API, this typically involves sending HTTP requests. For a CLI tool, it requires executing a command with its respective arguments and options.
 
-If I had just a few commands without options and testing just happy cases I would probably did not bother doing anything fancy. However, things were getting messy and wanted to do something about it. Additionaly the software were in early stage and I knew will be changing interface. 
+If I only had a few simple commands, no options and testing just happy paths, I probably wouldn't have bothered with anything fancy. However, things were getting messy, and I wanted to do something about it. Additionally, the software was in its early stages, and I knew the interface would be evolving.
 
-Let's consider command to be executed in pwsh:
+### Sample
+
+Let's consider a sample command I worked on.
 
 ``` powershell
 gcd nipkg build `
@@ -25,13 +27,13 @@ gcd nipkg build `
     --package-destination-dir 'build-test-output-dir'
 ```
 
-When translated to C# string looks:
+When translated to C# string it looks awfull.
 
 ``` csharp
 var command = "gcd nipkg build --content-src-dir 'testdata\\nipkg\\test-pkg-content' --target-root-dir 'BootVolume/manual-tests/gcd-build-test' --package-name 'gcd-build-test' --package-version '0.5.0-1' --package-destination-dir 'build-test-output-dir'
 ```
 
-This can be easily improved with string array:
+But can easily be improved with array of strings.
 ``` csharp
 var command = new  string[]
 {
@@ -46,14 +48,12 @@ var command = new  string[]
 };
 ```
 
-However, the problems I have got is that:
+This approach is simple and relatively clean in comparison to amount of required code but got some downsides:
 * Section `"gcd","nipkg","build"` need to be repeated for every call.
 * Option names need to be memorized by programmer (me) or checked/copied every single time.
-* Option names are being repeated with every call and If they were to be changed need to be chaned everywhere.
+* Option names are being repeated with every call and when they change, need to be replaced everywhere.
 
-The software was in early stage and haven't decided on the interface yet. Did not want to change everything once the option name has been changed. Additionaly wanted to a test few cases with every command.
-
-If I were building interface for command I knwo it works, I would probably use some DTO and function to call it.
+If I were building interface for a command to use in my software, I would probably use some DTO and function to call the command.
 ``` csharp
 public record BuildCommandDto(
     string ContentSrcDir,
@@ -63,20 +63,19 @@ public record BuildCommandDto(
     string PackageDestinationDir);
 ```
 
-But in this perticular case I actually wanted to have some flexibility to:
+However, in this perticular case I wanted to have some flexibility to:
 * send command with not supported option
 * send command without required option
 * send command with typo
 
-And still:
+and still:
 * don't need to memorize option names
 * don't repeat begining of the command 
-* change option in one place
+* change option in one place if changes
 
 I know, it is like eating apple and having apple but it is possible with builders.
 
-Before talking about the actuall solution let me describe builder itself. 
-
+Before talking about the actuall solution let me elaborate more on builder itself. 
 
 ### Builders
 There are quie a few variation of builder pattern like:
