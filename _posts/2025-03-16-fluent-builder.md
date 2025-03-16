@@ -6,7 +6,6 @@ tags: [C#, patterns, builder]     # TAG names should always be lowercase
 mermaid: true
 ---
 
-
 # Introduction
 Builder is one of my favourite programing pattern. It is simple, at least in it's base form, and can drastically improve readability. I have recently used it to make my integration tests more maintainable and would like to share my thoughts.
 
@@ -174,22 +173,26 @@ public class FluentCommandBuilder
     public string[] Build() => _args.ToArray();
 }
 ```
+#### Diagram
+``` mermaid
+classDiagram
+    class FluentCommandBuilder {
+        - List<string> _args
+        + FluentCommandBuilder WithArgument(string argument)
+        + FluentCommandBuilder WithOption(string name, string argument)
+        + string[] Build()
+    }
+```
 ## Solution
 `FluentCommandBuilder` improved the interface slightly but not as much for me to choose it over `string[]` implementation. The actual solution is presented below. This approach gives me the best results:
 * begining of the command is prepended automatically
 * no need to remember all the option names
 * option names can be changed in one place
 * neat syntax
-* can remove some options
-* can introduce some typos in option name if necessary
+* can remove some options for testing purposes
+* can introduce some typos in option name for testing purposes
 
-> Note that I have reused 'FluentArgumentsBuilder' using composition and created methods `WithArgument`, `WithOption` that delegates work to `FluentArgumentsBuilder`
-
-There are two reason for it:
-* I tend to use 'composition over inheritance' rule whenever I can.
-* Using Fluent Builder with inheritance has some chalanges.
-
-The actual truth is that I wanted to use inheritance here. I got some commands which share the same options and this approach could save me a lot of time but I couldn't. At least in the first go.
+> Note: I have reused 'FluentArgumentsBuilder' using composition and created methods `WithArgument`, `WithOption` that delegates work to `FluentArgumentsBuilder` As much as I would like to say that this is because I favour 'composition over inheritance', which I do, this is not the case.The actual truth is that I wanted to use inheritance here. I got some commands which share the same options and this approach could save me a lot of work but I couldn't. At least in the first go.
 
 #### Usage
 ```csharp
@@ -260,12 +263,51 @@ public class BuildCommandBuilder
         _builder.Build();
 }
 ```
+#### Diagram
+``` mermaid
+classDiagram
+    class FluentCommandBuilder {
+        - List<string> _args
+        + FluentCommandBuilder WithArgument(string argument)
+        + FluentCommandBuilder WithOption(string name, string argument)
+        + string[] Build()
+    }
+
+    class BuildCommandBuilder {
+        - FluentCommandBuilder _builder
+        + BuildCommandBuilder()
+        + BuildCommandBuilder WithContentSrcDirOption(string value)
+        + BuildCommandBuilder WithTargetRootDirOption(string value)
+        + BuildCommandBuilder WithPackageNameOption(string value)
+        + BuildCommandBuilder WithPackageVersionOption(string value)
+        + BuildCommandBuilder WithPackageDestinationDirOption(string value)
+        + BuildCommandBuilder WithArgument(string value)
+        + BuildCommandBuilder WithOption(string name, string value)
+        + string[] Build()
+    }
+
+    BuildCommandBuilder --> FluentCommandBuilder : "Uses"
+```
 ### Fluent Builder with intheritance
-So what is the fuss about using fluent builder with inheritance?
+#### Problem
+So what is the big deal with **Fluent Builder** using inheritance? At the core of **Fluent Builder** is the fact that it returns itself. As soon as you use method of parent class, it will return parent builder and you won't have access to child class methods anymore. This problem does not exist with **Classic Builder** since you don't relly on what the method returns and mutate builder's data instead.
 
 Let's consider implementation below.
 
 Let's assume that I have defined `BuildCmdArgumentBuilderUsingInheritance` using inheritance from `FluentArgumentBuilder` the code become a bit simpler:
+
+#### Usage - broken
+``` csharp
+var command = new BuildCommandBuilderUsingInheritance()
+    .WithContentSrcDirOption("testdata\nipkg\test-pkg-content")
+    .WithTargetRootDirOption("BootVolume/manual-tests/gcd-build-test")
+    .WithOption("--wrong-name-option","test") 
+    .WithPackageVersionOption("0.5.0-1")
+    .WithPackageDestinationDirOption("build-test-output-dir")
+    .Build();
+```
+
+#### Implementation
 ```csharp
 public class BuildCommandBuilderUsingInheritance : FluentCommandBuilder
 {
@@ -307,22 +349,35 @@ public class BuildCommandBuilderUsingInheritance : FluentCommandBuilder
     }
 }
 ```
+#### Diagram
+``` mermaid
+classDiagram
+    class FluentCommandBuilder {
+        - List<string> _args
+        + FluentCommandBuilder WithArgument(string argument)
+        + FluentCommandBuilder WithOption(string name, string argument)
+        + string[] Build()
+    }
+
+    class BuildCommandBuilderUsingInheritance {
+        + BuildCommandBuilderUsingInheritance()
+        + BuildCommandBuilderUsingInheritance WithContentSrcDirOption(string value)
+        + BuildCommandBuilderUsingInheritance WithTargetRootDirOption(string value)
+        + BuildCommandBuilderUsingInheritance WithPackageNameOption(string value)
+        + BuildCommandBuilderUsingInheritance WithPackageVersionOption(string value)
+        + BuildCommandBuilderUsingInheritance WithPackageDestinationDirOption(string value)
+    }
+
+    BuildCommandBuilderUsingInheritance --|> FluentCommandBuilder : "Inherits"
+```
 
 The main problem with using Fluent Builder with inheritance is that:
 **parent function will return parent builder**. Meaning that as soon as I call `WithOption("","")` which is defined in `FluentArgumentBuilder` I will no longer has access to methods defined on `BuildCmdArgumentBuilderUsingInheritance`
 
-``` csharp
-var args4 = new BuildCmdArgumentBuilderUsingInheritance()
-    .WithContentSrcDirOption("testdata\nipkg\test-pkg-content")
-    .WithOption("--fake-option","") // option that does not belong to cmd interface and should be handled gracefully
-    .WithTargetRootDirOption("BootVolume/manual-tests/gcd-build-test")
-    .WithPackageNameOption("cd-build-test")
-    .WithPackageVersionOption("0.5.0-1")
-    .WithPackageDestinationDirOption("build-test-output-dir")
-    .Build();
-```
+
 
 You would not have this problem if classic builder was used but that's not what I wanted.
 
-The solution to this chalange is `fluent builder with recursive generics` and I will be covering that in future posts.
+#### Solution
+The solution to this chalange is **Fluent Builder With Recursive Generics** and I will be covering this in the future posts.
 
