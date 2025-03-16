@@ -3,6 +3,7 @@ title: Clasic and fluent builder
 date: 2025-03-16 12:00:00 +0100
 categories: [C#, Azure]
 tags: [C#, patterns, builder]     # TAG names should always be lowercase
+mermaid: true
 ---
 
 
@@ -33,7 +34,7 @@ var command = "gcd nipkg build --content-src-dir 'testdata\\nipkg\\test-pkg-cont
 
 This can be easily improved with string array:
 ``` csharp
-var cmd = new  string[]
+var command = new  string[]
 {
     "gcd",
     "nipkg",
@@ -94,71 +95,84 @@ The initial examples I give, will not solve the actuall problem. They are actual
 ### Clasic Builder
 Classic builder is something I rarely use and not because it is bad. I just love the syntax Fluent Builder so much that don't want to use anything else. However, Fluent Builder can pose some chalanges when it comes to inheritance and wanted to compare it to Classic Builder in that regards.
 
+#### Usage
+``` csharp
+var builder = new ClassicCommandBuilder();
+builder.WithArgument("gcd");
+builder.WithArgument("nipkg");
+builder.WithArgument("build");
+builder.WithOption("--content-src-dir","testdata\\nipkg\\test-pkg-content");
+builder.WithOption("--target-root-dir","BootVolume/manual-tests/gcd-build-test");
+builder.WithOption("--package-name","cd-build-test");
+builder.WithOption("--package-version","0.5.0-1");
+builder.WithOption("--package-destination-dir","build-test-output-dir");
+var command = builder.Build();
+```
+
 #### Implementation
 ``` csharp
-public class ClassicArgumentBuilder
+public class ClassicCommandBuilder
 {
     private readonly List<string> _args = [];
-    public void AddArgument(string argument)
+    public void WithArgument(string argument)
     {
         _args.Add(argument);
     }
-    public void AddOption(string name, string argument)
+    public void WithOption(string name, string argument)
     {
+        _args.Add(name);
         _args.Add(argument);
     }
     public string[] Build() => _args.ToArray();
 }
 ```
-#### Usage
 
-``` csharp
-var builder = new ClassicArgumentBuilder();
-builder.AddArgument("gcd");
-builder.AddArgument("nipkg");
-builder.AddArgument("build");
-builder.AddOption("--content-src-dir","testdata\nipkg\test-pkg-content");
-builder.AddOption("--target-root-dir","BootVolume/manual-tests/gcd-build-test");
-builder.AddOption("--package-name","cd-build-test");
-builder.AddOption("--package-version","0.5.0-1");
-builder.AddOption("--package-destination-dir","build-test-output-dir");
-var aruments = builder.Build();
+#### Diagram
+``` mermaid
+classDiagram
+    class ClassicCommandBuilder {
+        - List<string> _args
+        + WithArgument(string argument)
+        + WithOption(string name, string argument)
+        + Build() string[]
+    }
 ```
-
 ### Fluent Builder
 Fluent Builder is my first choice when it comes to builders.
 Fluent interface is something which allows you to chain function and is quite easy to implement. Every function must return Builder itself instead of void.
 
+#### Usage
+```csharp
+var command = new FluentCommandBuilder()
+    .WithArgument("gcd")
+    .WithArgument("nipkg")
+    .WithArgument("build")
+    .WithOption("--content-src-dir", "testdata\\nipkg\\test-pkg-content")
+    .WithOption("--target-root-dir", "BootVolume/manual-tests/gcd-build-test")
+    .WithOption("--wrong-name-option", "cd-build-test")
+    .WithOption("--package-version", "0.5.0-1")
+    .WithOption("--package-destination-dir", "build-test-output-dir")
+    .Build();
+```
+
 #### Implementation
 ```csharp
-public class FluentArgumentBuilder
+public class FluentCommandBuilder
 {
     private readonly List<string> _args = [];
-    public FluentArgumentBuilder AddArgument(string argument)
+    public FluentCommandBuilder WithArgument(string argument)
     {
         _args.Add(argument);
         return this;
     }
-    public FluentArgumentBuilder AddOption(string name, string argument)
+    public FluentCommandBuilder WithOption(string name, string argument)
     {
+        _args.Add(name);
         _args.Add(argument);
         return this;
     }
     public string[] Build() => _args.ToArray();
 }
-```
-#### Usage
-```csharp
-var aruments = new FluentArgumentBuilder()
-    .AddArgument("gcd")
-    .AddArgument("nipkg")
-    .AddArgument("build")
-    .AddOption("--content-src-dir", "testdata\nipkg\test-pkg-content")
-    .AddOption("--target-root-dir", "BootVolume/manual-tests/gcd-build-test")
-    .AddOption("--package-name", "cd-build-test")
-    .AddOption("--package-version", "0.5.0-1")
-    .AddOption("--package-destination-dir", "build-test-output-dir")
-    .Build();
 ```
 ## Solution
 `FluentCommandBuilder` improved the interface slightly but not as much for me to choose it over `string[]` implementation. The actual solution is presented below. This approach gives me the best results:
@@ -166,14 +180,23 @@ var aruments = new FluentArgumentBuilder()
 * no need to remember all the option names
 * option names can be changed in one place
 * neat syntax
+* can remove some options
 * can introduce some typos in option name if necessary
+
+> Note that I have reused 'FluentArgumentsBuilder' using composition and created methods `WithArgument`, `WithOption` that delegates work to `FluentArgumentsBuilder`
+
+There are two reason for it:
+* I tend to use 'composition over inheritance' rule whenever I can.
+* Using Fluent Builder with inheritance has some chalanges.
+
+The actual truth is that I wanted to use inheritance here. I got some commands which share the same options and this approach could save me a lot of time but I couldn't. At least in the first go.
 
 #### Usage
 ```csharp
-var arguments = new BuildCmdArgBuilder()
-    .WithContentSrcDirOption("testdata\nipkg\test-pkg-content")
+var command = new BuildCommandBuilder()
+    .WithContentSrcDirOption("testdata\\nipkg\\test-pkg-content")
     .WithTargetRootDirOption("BootVolume/manual-tests/gcd-build-test")
-    .WithOption()
+    .WithOption("--wrong-name-option","test") 
     .WithPackageVersionOption("0.5.0-1")
     .WithPackageDestinationDirOption("build-test-output-dir")
     .Build();
@@ -181,91 +204,103 @@ var arguments = new BuildCmdArgBuilder()
 
 #### Implementation
 ```csharp
-public class BuildCmdArgBuilder
+public class BuildCommandBuilder
 {
-    private readonly FluentArgumentBuilder _builder = new();
+    private readonly FluentCommandBuilder _builder = new();
 
-    public BuildCmdArgBuilder()
+    public BuildCommandBuilder()
     {
-        _builder.AddArgument("gcd");
-        _builder.AddArgument("nipkg");
-        _builder.AddArgument("build");
+        _builder.WithArgument("gcd");
+        _builder.WithArgument("nipkg");
+        _builder.WithArgument("build");
     }
 
-    public BuildCmdArgBuilder WithContentSrcDirOption(string value)
+    public BuildCommandBuilder WithContentSrcDirOption(string value)
     {
-        _builder.AddOption("--content-src-dir", value);
+        _builder.WithOption("--content-src-dir", value);
         return this;
     }
     
-    public BuildCmdArgBuilder WithTargetRootDirOption(string value)
+    public BuildCommandBuilder WithTargetRootDirOption(string value)
     {
-        _builder.AddOption("--target-root-dir", value);
+        _builder.WithOption("--target-root-dir", value);
         return this;
     }
     
-    public BuildCmdArgBuilder WithPackageNameOption(string value)
+    public BuildCommandBuilder WithPackageNameOption(string value)
     {
-        _builder.AddOption("-package-name", value);
+        _builder.WithOption("-package-name", value);
         return this;
     }
     
-    public BuildCmdArgBuilder WithPackageVersionOption(string value)
+    public BuildCommandBuilder WithPackageVersionOption(string value)
     {
-        _builder.AddOption("--package-version", value);
+        _builder.WithOption("--package-version", value);
         return this;
     }
 
-    public BuildCmdArgBuilder WithPackageDestinationDirOption(string value)
+    public BuildCommandBuilder WithPackageDestinationDirOption(string value)
     {
-        _builder.AddOption("--package-destination-dir", value);
+        _builder.WithOption("--package-destination-dir", value);
         return this;
     }
+    
+    public BuildCommandBuilder WithArgument(string value)
+    {
+        _builder.WithArgument(value);
+        return this;
+    }
+    
+    public BuildCommandBuilder WithOption(string name, string value)
+    {
+        _builder.WithOption(name, value);
+        return this;
+    }
+    public string[] Build() =>
+        _builder.Build();
 }
 ```
-
-Note that I have reused previous 'FluentArgumentsBuilder' using composition. There are two reason for it:
-* I tend to use 'composition over inheritance' rule whenever I can. Although in this perticular case I knew that I will have many options with the same name for other commands and actually wanted to use.
-* Using Fluent Builder with is chalanging
-
 ### Fluent Builder with intheritance
+So what is the fuss about using fluent builder with inheritance?
+
+Let's consider implementation below.
 
 Let's assume that I have defined `BuildCmdArgumentBuilderUsingInheritance` using inheritance from `FluentArgumentBuilder` the code become a bit simpler:
 ```csharp
-public class BuildCmdArgumentBuilderUsingInheritance : FluentArgumentBuilder
+public class BuildCommandBuilderUsingInheritance : FluentCommandBuilder
 {
-    public BuildCmdArgumentBuilderUsingInheritance()
+    public BuildCommandBuilderUsingInheritance()
     {
         WithArgument("gcd");
         WithArgument("nipkg");
         WithArgument("build");
     }
 
-    public BuildCmdArgumentBuilderUsingInheritance WithContentSrcDirOption(string value)
+    public BuildCommandBuilderUsingInheritance WithContentSrcDirOption(string value)
     {
         WithOption("--content-src-dir", value);
         return this;
     }
     
-    public BuildCmdArgumentBuilderUsingInheritance WithTargetRootDirOption(string value)
+    public BuildCommandBuilderUsingInheritance WithTargetRootDirOption(string value)
     {
         WithOption("--target-root-dir", value);
         return this;
     }
     
-    public BuildCmdArgumentBuilderUsingInheritance WithPackageNameOption(string value)
+    public BuildCommandBuilderUsingInheritance WithPackageNameOption(string value)
     {
         WithOption("-package-name", value);
         return this;
     }
     
-    public BuildCmdArgumentBuilderUsingInheritance WithPackageVersionOption(string value)
+    public BuildCommandBuilderUsingInheritance WithPackageVersionOption(string value)
     {
         WithOption("--package-version", value);
         return this;
     }
 
-    public BuildCmdArgumentBuilderUsingInheritance WithPackageDestinationDirOption(string value)
+    public BuildCommandBuilderUsingInheritance WithPackageDestinationDirOption(string value)
     {
         WithOption("--package-destination-dir", value);
         return this;
