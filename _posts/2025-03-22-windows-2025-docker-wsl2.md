@@ -24,11 +24,13 @@ Ok, as much as I could make fun of windows containers I use them. Why? Because a
 
 When you are working with Linux containers, services like MSSQL, MongoDB, RabbitMQ, Nginx, actually any software you can imagine, can be up and running on your machine within a few seconds and I include time to read sparse documentation.
 
-Windows containers ecosystem is not so rich. When I started my jurney with containers, Microsoft was still supporting developement images for MS SQL on windows. You can check that Windows folder of this [repo](https://github.com/microsoft/mssql-docker) was not updated for the last 4 years. After that, started to develop own images for MSSQL and actually any infrastructure I required in test/dev environments. 
+Windows containers ecosystem is not so rich. When I begun my jurney with containers, Microsoft was still supporting developement images for MS SQL on windows. You can check that Windows folder of this [repo](https://github.com/microsoft/mssql-docker) was not updated for the last 4 years. After that, started to develop own images for MSSQL and actually any infrastructure I required in test/dev environments.
+
+Going forward I hope, I will not need to do it anymore. The changes to Window Server should allow to run Linux containers on Windows without need for custom setup. That's why I present this on GitHub action hosted agent. Which is still in [beta](https://github.com/actions/runner-images?tab=readme-ov-file) but [availible](https://github.com/actions/runner-images/issues/11228) for anyone to use.
 
 
 ### Windows Server 2025
-Windows Server 2025 has been generaly availible since [4th of November 2024](https://www.microsoft.com/en-us/windows-server/blog/2024/11/04/windows-server-2025-now-generally-available-with-advanced-security-improved-performance-and-cloud-agility/) and it is being shiped with a few features I am actually excited about.
+Windows Server 2025 has been generaly availible since [4th of November 2024](https://www.microsoft.com/en-us/windows-server/blog/2024/11/04/windows-server-2025-now-generally-available-with-advanced-security-improved-performance-and-cloud-agility/) and it is being shiped with a few features I am actually excited about (and related to this post).
 
 #### WSL2
 **WSL** in general allows you to run a Linux environment on Windows and **WSL2** has significant performance improvemts in relation to WSL1. What is most important, it allows you to run Linux docker containers on Windows machine without the need for Hyper-V.
