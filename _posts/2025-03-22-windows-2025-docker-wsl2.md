@@ -28,4 +28,15 @@ With Windows Server 2025 relase you can run WSL2.
 For those who does not know that, Microsoft fianlly created a package manager called Winget which allows you to easily autmoate process instalation. It has been introduced in 2020, roughly after 15 years after dpkg. What a jurney! It was possible to add it to your system before but now it is delivered with the Windows Server 2025 base instalation. 
 
 #### Containers Portability
-This is something I have not investigated thoroughly but looks promissing. 
+This is something I have not investigated thoroughly but looks promissing. Loking at this [matrix](https://learn.microsoft.com/en-us/virtualization/windowscontainers/deploy-containers/version-compatibility?tabs=windows-server-2025%2Cwindows-11) I can conlude it is possible to run Windows 2022 containers on  Windows Server 2022, 2025 and Windows 11 using process isolation. Thanks to **Containers Portability** it will be possible to use windows containers as containers and not lightweight VMs ;)
+
+## Eat an apple and have an apple
+With Windows Server 2025 it should be possible to:
+- Run and build as on any windows os
+- Run and build windows containers with process isolation
+- Run and build linux containers with WSL2
+
+I would not use this approach in production but for testing where you can sacrifice a bit of performance for a bit of convinience why not.
+
+#### Github Action windows-2025
+
