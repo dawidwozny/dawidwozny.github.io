@@ -56,7 +56,7 @@ It is actually the first time you can run both windows and linux containers on t
 As I mentioned earlier the setup was done on new GitHub Action image [windows-2025](https://github.com/actions/runner-images/issues/11228) as for now 2025-03-22 is still in beta.
 
 ## Soulution
-I have build a [pipline](https://github.com/dawidwozny/ms-hosted-windows-2025/blob/azure-pipelines/.github/workflows/main.yml) in dedicated [repo](https://github.com/dawidwozny/ms-hosted-windows-2025) which you can fork and play yourself.
+I have build a [pipline](https://github.com/dawidwozny/ms-hosted-windows-2025/blob/main/.github/workflows/main.yml) in dedicated [repo](https://github.com/dawidwozny/ms-hosted-windows-2025) which you can fork and play yourself.
 
 Here I will give some comments on the steps:
 ### Checkout with LFS
@@ -204,3 +204,6 @@ Invoke-WebRequest -Uri http://localhost:8080
 ``` powershell
 Invoke-WebRequest -Uri http://localhost:8081
 ```
+
+## Summary
+That's it. It is possible. GitHub runner is still in beta so this approach is not ready yet but looking forward using it soon. Don't get me wrong here. I would not run Linux container on Windows in production unless Microsoft says explicitly it is supported. Although for building test/dev environments I am willing to accept some risk.
