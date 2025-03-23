@@ -180,3 +180,27 @@ Invoke-Sqlcmd `
     -Query "SELECT * FROM Person;" 
 ```
 
+### Run Windows 2022 container
+This is proof that you can run Windows Server 2022 image on Windows Server 2025 host.
+I have added flag `--isolation=process` just to be explicit about it but this command would normally fail anyway since GitHub runner does not have nested virutalisation and Hyper-V installed.
+
+```powershell
+docker run -d -p 8081:8080 --name aspnetcore_sample mcr.microsoft.com/dotnet/samples:aspnetapp-8.0-nanoserver-ltsc2022 --isolation=process
+```
+
+### Run Windows 2025 container
+There is no ASP.NET sample availible for 2025 therfore just run powershell command. Did not want to overcomplicate it with my own application.
+
+```powershell
+docker run --rm --isolation=process mcr.microsoft.com/windows/servercore:ltsc2025-amd64 powershell -Command "Write-Host 'Hello from the other side!'" 
+```
+
+### Test linux container still works
+``` powershell
+Invoke-WebRequest -Uri http://localhost:8080
+```
+
+### Test ASP.NET LTSC 2022 container works
+``` powershell
+Invoke-WebRequest -Uri http://localhost:8081
+```
