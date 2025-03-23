@@ -7,9 +7,10 @@ mermaid: true
 ---
 
 # Intro
-There will be quite a few side topics in this post therefore will get straigh to the point and then elaborate on couple of things after. What you could learn here is:
-* how to run windows docker container with process isolation
-* how to run linux docker container with WSL2
+There will be quite a few side topics in this post therefore will list the main points first and then elaborate on couple of things after. What you could learn here is:
+* how to run Windows Server 2022 LTSC container on Windows Server 2025 LTSC with process isolation
+* how to run Windows Server 2025 LTSC container on Windows Server 2025 LTSC with process isolation
+* how to run MSSQL Linux docker container with WSL2
 * do all above on the same machine simultaneously
 * do it on GitHub action hosted agent windows-2025
 
@@ -17,12 +18,12 @@ If you are not interested in reading you can just check the pipline [here](https
 
 ## Motivation
 ### Weirdo
-I hope nobody will get ofended but I think 'we' developers are a weird group of people. We get genuinely excited about things that most people find absolutely boring. Like, who cares about  composition, dependency inversion or functional programing? Normal person thinks about inheritance at most! We spend days writing software for free on GitHub, while other people are out there enjoying life on other *Hub platforms... like Snapchat or TikTok 😆 And recently started to wonder if being weird in a group of weird people makes me O(n^2) weird or maybe normal? Why I can be consider weird among developers? I use windows docker containers. Yeah, and apart of people I showed this painfull path I don't know anyone in person using it. Even Microsoft publish official image for MSSQL on Linux not on Windows.😆 It's like a secret club… with a really buggy entrance.
+I hope nobody will get ofended but I think 'we' developers are a weird group of people. We get genuinely excited about things that most people find absolutely boring. Like, who cares about  composition, dependency inversion or functional programing? Normal person thinks about inheritance at most! We spend days writing software for free on GitHub, while other people are out there enjoying life on other *Hub platforms... like Snapchat or TikTok 😆 And recently started to wonder if being weird in a group of weird people makes me O(n^2) weird or maybe normal? Why I can be consider weird among developers? I use windows containers. Yeah, and apart of people I showed this painfull path I don't know anyone in person using it. Even Microsoft publish official image for MSSQL on Linux not on Windows.😆 It's like a secret club… with a really buggy entrance.
 
-### Now serious
+### Being serious
 Ok, as much as I could make fun of windows containers I use them. Why? Because as any container technology, they solve real problems. There are corner cases where you can't use Linux and still want to benefit from contenerisation. So is this post for somebody who want to learn windows containers? No. This post is for somebody who wan't to get the most of Linux containers but still need to build on Windows.
 
-When you are working with Linux containers, services like MSSQL, MongoDB, RabbitMQ, Nginx, actually any software you can imagine, can be up and running on your machine within a few seconds and I include time to read sparse documentation.
+When you are working with Linux containers, services like MSSQL, MongoDB, RabbitMQ, Nginx, actually any software you can imagine, can be up and running on your machine within a few seconds and I also include time to read sparse documentation.
 
 Windows containers ecosystem is not so rich. When I begun my jurney with containers, Microsoft was still supporting developement images for MS SQL on windows. You can check that Windows folder of this [repo](https://github.com/microsoft/mssql-docker) was not updated for the last 4 years. After that, started to develop own images for MSSQL and actually any infrastructure I required in test/dev environments.
 
@@ -35,9 +36,9 @@ Windows Server 2025 has been generaly availible since [4th of November 2024](htt
 #### WSL2
 **WSL** in general allows you to run a Linux environment on Windows and **WSL2** has significant performance improvemts in relation to WSL1. What is most important, it allows you to run Linux docker containers on Windows machine without the need for Hyper-V.
 
-WSL2 was not included in Windows Server 2022 LTSC and only added to Windows Server 2022 some time after the release. This was quite important obstacle. When  using **Windows Containers** you need to match the version of the operating system and the container and that is most of the time LTSC. At least how it was so far. Did not investigated [Portability for containers](https://learn.microsoft.com/en-us/virtualization/windowscontainers/deploy-containers/portability) enough to say that changed but it seems it changed.
+WSL2 was not included in Windows Server 2022 LTSC and only added to Windows Server 2022 SAC some time after the release. This was quite important obstacle. When  using **Windows Containers** you need to match the version of the operating system and the container and that is most of the time LTSC. At least how it was so far and changed with [Container Portability](https://learn.microsoft.com/en-us/virtualization/windowscontainers/deploy-containers/portability) implementation.
 
-So in theory I could have WSL2 on Windows Server 2022 but without [Process Isolation](https://learn.microsoft.com/en-us/virtualization/windowscontainers/manage-containers/hyperv-container) for containers, so no go. 
+So in theory I could have WSL2 on Windows Server 2022 but without [Process Isolation](https://learn.microsoft.com/en-us/virtualization/windowscontainers/manage-containers/hyperv-container) for windows containers, no go. 
 
 With Windows Server 2025 relase you can run WSL2. 
 
@@ -45,15 +46,137 @@ With Windows Server 2025 relase you can run WSL2.
 For those who does not know that, Microsoft fianlly created a package manager called Winget which allows you to easily autmoate process instalation. It has been introduced in 2020, roughly after 15 years after dpkg. What a jurney! It was possible to add it to your system before but now it is delivered with the Windows Server 2025 base instalation. 
 
 #### Containers Portability
-This is something I have not investigated thoroughly but looks promissing. Loking at this [matrix](https://learn.microsoft.com/en-us/virtualization/windowscontainers/deploy-containers/version-compatibility?tabs=windows-server-2025%2Cwindows-11) I can conlude it is possible to run Windows 2022 containers on  Windows Server 2022, 2025 and Windows 11 using process isolation. Thanks to **Containers Portability** it will be possible to use windows containers as containers and not lightweight VMs ;)
+[Containers Portability](https://learn.microsoft.com/en-us/virtualization/windowscontainers/deploy-containers/portability) was something highly anticipated and makes Windows containers working more like Linux ones where you don't need to match exact version of container and host. It has actually been added to version 23H2 in [July 2023](https://techcommunity.microsoft.com/blog/containers/portability-with-windows-server-annual-channel-for-containers/3885911) but it is first time being part of LTSC version.
+
 
 ## Eat an apple and have an apple
-With Windows Server 2025 it should be possible to:
-- Run and build as on any windows os
-- Run and build windows containers with process isolation
-- Run and build linux containers with WSL2
-
-I would not use this approach in production but for testing where I can sacrifice a bit of performance for a bit of convinience why not.
+It is actually the first time you can run both windows and linux containers on the same server without tremendous drop in performance. Without playing a lot with virtualisation and creating custom host machines. With some little tweaks, almost of the shelf.
 
 #### Github Action windows-2025
+As I mentioned earlier the setup was done on new GitHub Action image [windows-2025](https://github.com/actions/runner-images/issues/11228) as for now 2025-03-22 is still in beta.
+
+## Soulution
+I have build a [pipline](https://github.com/dawidwozny/ms-hosted-windows-2025/blob/azure-pipelines/.github/workflows/main.yml) in dedicated [repo](https://github.com/dawidwozny/ms-hosted-windows-2025) which you can fork and play yourself.
+
+Here I will give some comments on the steps:
+### Checkout with LFS
+Wanted to make it a bit more usefull example therfore added fake test database which is stored through Git LFS.
+``` yml
+- uses: actions/checkout@v4
+    with:
+        lfs: true
+```
+### Install distro
+This is the first step which install linux distribution. It takes around 40 seconds.
+``` powershell
+wsl --install Ubuntu
+```
+
+### Prevent WSL shutdonw
+Little trick to prevent WSL to shutdown automatically. By default when using `wsl -- <command>` syntax, WSL will shutdown automatically after a few seconds along with all containers.
+``` powershell
+wsl -d Ubuntu  --exec dbus-launch true   
+```
+### Install docker on WSL
+I had some issues with bash script created on windows. `dos2unix` did a trick.
+
+```powershell
+wsl -- sudo apt-get update
+wsl -- sudo apt-get install dos2unix
+wsl -- dos2unix ./docker-install.sh
+wsl -- ./docker-install.sh
+```
+
+#### docker-install.sh
+It is copy paste of official docker instalation [instruction](https://docs.docker.com/engine/install/ubuntu/).
+``` bash
+#!/bin/sh
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+# install docker
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
+```
+
+### Compose Up
+I could run just `docker run` but wanted to make it a bit more interesting and restore db from backup therfore used compose. Prempting criticism: this setup meant to be simple not secure.
+
+``` powershell
+wsl -- sudo docker compose pull -q  
+wsl -- sudo docker compose -p test-setup up -d
+```
+
+``` yaml
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    ports:
+      - "1433:1433"
+    environment:
+     - MSSQL_SA_PASSWORD=SecretPassword9!
+     - ACCEPT_EULA=Y
+    volumes:
+      - ./database/data:/var/opt/mssql/data
+      - ./database/log:/var/opt/mssql/log
+      - ./database/backup:/var/opt/mssql/backup
+  web:
+    image: nginx
+    ports:
+      - "8080:80"
+```
+### Test curl inside wsl
+Returns startup nginx content.
+```powershell
+wsl -- curl http://localhost:8080
+```
+
+### Test request from windows host
+Returns the same output as curl.
+```powershell
+Invoke-WebRequest -Uri http://localhost:8080
+```
+
+### Run initial test query
+>Note: Used address is 127.0.0.1 and not localhost. Had some issues with networking which I will be still investigating so it is not plain sailing.
+```powershell
+Invoke-Sqlcmd `
+    -ServerInstance "127.0.0.1,1433" `
+    -Database master `
+    -Username "sa" `
+    -Password "SecretPassword9!" `
+    -TrustServer `
+    -Query "SELECT name FROM sys.databases" 
+```
+
+### Restore database from backup 
+Backup folder is mounted during docker compose.
+``` powershell
+Invoke-Sqlcmd `
+    -ServerInstance "127.0.0.1,1433" `
+    -Database master `
+    -Username "sa" `
+    -Password "SecretPassword9!" `
+    -TrustServer `
+    -Query "RESTORE DATABASE test FROM DISK = '/var/opt/mssql/backup/test.bak' WITH REPLACE;"
+```
+
+### Run sample query on resored database
+```powershell
+Invoke-Sqlcmd `
+    -ServerInstance "127.0.0.1,1433" `
+    -Database test `
+    -Username "sa" `
+    -Password "SecretPassword9!" `
+    -TrustServer `
+    -Query "SELECT * FROM Person;" 
+```
 
